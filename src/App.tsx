@@ -3,6 +3,7 @@ import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useIslandState } from "./hooks/useIslandState";
 import { IslandShell } from "./components/IslandShell";
 import { CornerLyrics } from "./components/CornerLyrics";
+import { PomodoroHUD } from "./components/PomodoroHUD";
 import "./styles/island.css";
 
 export const App: React.FC = () => {
@@ -78,6 +79,18 @@ export const App: React.FC = () => {
         music={state.music}
         onTogglePlay={toggleMusicPlayback}
         onOpenIslandLyrics={() => expand("lyrics")}
+      />
+    );
+  }
+
+  // When rendered inside the dedicated pomodoro-hud window
+  if (windowLabel === "pomodoro-hud") {
+    return (
+      <PomodoroHUD
+        timer={state.timer}
+        onStart={startTimer}
+        onPause={pauseTimer}
+        onStop={stopTimer}
       />
     );
   }

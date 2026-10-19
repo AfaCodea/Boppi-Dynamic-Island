@@ -1,8 +1,10 @@
-import React from "react";
-import { Play, Pause, RotateCcw, Plus, Sparkles, CheckCircle2 } from "lucide-react";
+import React, { useState } from "react";
+import { Play, Pause, RotateCcw, Plus, Sparkles, CheckCircle2, Monitor } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 import { TimerState } from "../types/island";
 import { IslandActionButton } from "./IslandActionButton";
 import { IslandProgressBar } from "./IslandProgressBar";
+import { playPopSound } from "../utils/audio";
 
 export interface IslandTimerProps {
   /** Current timer state payload */
@@ -27,6 +29,8 @@ export const IslandTimer: React.FC<IslandTimerProps> = ({
   onStop,
   onAddSeconds,
 }) => {
+  const [isPopping, setIsPopping] = useState(false);
+
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
@@ -40,8 +44,28 @@ export const IslandTimer: React.FC<IslandTimerProps> = ({
 
   const isCompleted = timer.remainingSeconds === 0 && timer.totalSeconds > 0;
 
+  const handleStartWithPop = (seconds?: number, label?: string) => {
+    setIsPopping(true);
+    playPopSound();
+    setTimeout(() => setIsPopping(false), 600);
+    onStart(seconds, label);
+  };
+
+  const handleToggleScreenHUD = async () => {
+    playPopSound();
+    try {
+      await invoke("show_pomodoro_hud");
+    } catch {
+      // preview fallback
+    }
+  };
+
   return (
-    <div className="feature-pane island-timer-pane" role="region" aria-label="Timer Controls">
+    <div
+      className={`feature-pane island-timer-pane ${isPopping ? "timer-pop-pulse" : ""}`}
+      role="region"
+      aria-label="Timer Controls"
+    >
       {/* Time Display and Bump Column */}
       <div className="timer-main-col">
         <div className="timer-meta-row">
@@ -61,6 +85,15 @@ export const IslandTimer: React.FC<IslandTimerProps> = ({
               <span>Completed</span>
             </span>
           )}
+          <button
+            type="button"
+            className="hud-screen-toggle-pill"
+            onClick={handleToggleScreenHUD}
+            title="Tampilkan timer floating di tengah layar"
+          >
+            <Monitor size={10} />
+            <span>HUD Layar</span>
+          </button>
         </div>
 
         <div className="timer-display-row">
@@ -70,7 +103,11 @@ export const IslandTimer: React.FC<IslandTimerProps> = ({
           <button
             type="button"
             className="timer-bump-btn"
-            onClick={() => onAddSeconds ? onAddSeconds(60) : onStart(timer.remainingSeconds + 60)}
+            onClick={() => {
+              playPopSound();
+              if (onAddSeconds) onAddSeconds(60);
+              else onStart(timer.remainingSeconds + 60);
+            }}
             title="Add 1 minute"
           >
             <Plus size={10} aria-hidden="true" />
@@ -100,14 +137,18 @@ export const IslandTimer: React.FC<IslandTimerProps> = ({
               Pause
             </IslandActionButton>
           ) : (
-            <IslandActionButton
-              variant="primary"
-              onClick={() => onStart()}
-              icon={<Play size={13} fill="currentColor" />}
-              ariaLabel="Start Timer"
-            >
-              Start
-            </IslandActionButton>
+            <div className="pop-btn-container">
+              {isPopping && <span className="shockwave-ring" />}
+              <IslandActionButton
+                variant="primary"
+                onClick={() => handleStartWithPop()}
+                icon={<Play size={13} fill="currentColor" />}
+                ariaLabel="Start Timer"
+                className={isPopping ? "btn-spring-popping" : ""}
+              >
+                Start
+              </IslandActionButton>
+            </div>
           )}
 
           <IslandActionButton
@@ -125,8 +166,8 @@ export const IslandTimer: React.FC<IslandTimerProps> = ({
         <div className="timer-presets-row" role="group" aria-label="Quick Presets">
           <button
             type="button"
-            className="preset-chip"
-            onClick={() => onStart(25 * 60, "Pomodoro")}
+            className={`preset-chip ${isPopping ? "preset-pop" : ""}`}
+            onClick={() => handleStartWithPop(25 * 60, "Pomodoro Focus")}
             title="Start 25 min Pomodoro"
           >
             25m
@@ -134,7 +175,7 @@ export const IslandTimer: React.FC<IslandTimerProps> = ({
           <button
             type="button"
             className="preset-chip"
-            onClick={() => onStart(5 * 60, "Short Break")}
+            onClick={() => handleStartWithPop(5 * 60, "Short Break")}
             title="Start 5 min Short Break"
           >
             5m
@@ -142,7 +183,7 @@ export const IslandTimer: React.FC<IslandTimerProps> = ({
           <button
             type="button"
             className="preset-chip"
-            onClick={() => onStart(15 * 60, "Long Break")}
+            onClick={() => handleStartWithPop(15 * 60, "Long Break")}
             title="Start 15 min Long Break"
           >
             15m
@@ -150,7 +191,7 @@ export const IslandTimer: React.FC<IslandTimerProps> = ({
           <button
             type="button"
             className="preset-chip"
-            onClick={() => onStart(45 * 60, "Deep Focus")}
+            onClick={() => handleStartWithPop(45 * 60, "Deep Focus")}
             title="Start 45 min Deep Focus"
           >
             45m

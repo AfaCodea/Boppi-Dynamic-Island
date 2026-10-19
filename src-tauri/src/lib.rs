@@ -5,7 +5,8 @@ pub mod services;
 pub mod state;
 
 use crate::commands::island::{
-    collapse_island, expand_island, pause_timer, start_timer, stop_timer, toggle_island,
+    collapse_island, expand_island, hide_pomodoro_hud, pause_timer, show_pomodoro_hud,
+    start_timer, stop_timer, toggle_island,
 };
 use crate::commands::settings::{get_settings, set_settings};
 use crate::commands::system::{
@@ -34,6 +35,8 @@ pub fn run() {
             start_timer,
             pause_timer,
             stop_timer,
+            show_pomodoro_hud,
+            hide_pomodoro_hud,
             get_settings,
             set_settings,
             get_battery_status,
@@ -52,6 +55,10 @@ pub fn run() {
 
             if let Some(corner_window) = app.get_webview_window("corner-lyrics") {
                 OverlayManager::setup_overlay_window(&corner_window);
+            }
+
+            if let Some(hud_window) = app.get_webview_window("pomodoro-hud") {
+                OverlayManager::setup_overlay_window(&hud_window);
             }
 
             // Start live macOS Spotify/Apple Music bridge loop

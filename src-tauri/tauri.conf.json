@@ -44,8 +44,24 @@
         "center": false,
         "x": null,
         "y": 0
+      },
+      {
+        "label": "pomodoro-hud",
+        "title": "Boppi Focus HUD",
+        "width": 380,
+        "height": 240,
+        "decorations": false,
+        "transparent": true,
+        "resizable": false,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true,
+        "visible": false,
+        "focus": false,
+        "center": true,
+        "x": null,
+        "y": null
       }
-
     ],
     "security": {
       "csp": null

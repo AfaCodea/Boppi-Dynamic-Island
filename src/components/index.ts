@@ -16,3 +16,4 @@ export * from "./IslandTooltip";
 export * from "./IslandStatusIndicator";
 export * from "./CornerLyrics";
 export * from "./IslandContent";
+export * from "./PomodoroHUD";

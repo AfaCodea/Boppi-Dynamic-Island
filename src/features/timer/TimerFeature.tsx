@@ -1,6 +1,7 @@
 import React from "react";
 import { Play, Pause, RotateCcw, Clock, Plus, Zap } from "lucide-react";
 import { TimerState } from "../../types/island";
+import { playPopSound } from "../../utils/audio";
 
 interface Props {
   timer: TimerState;
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export const TimerFeature: React.FC<Props> = ({ timer, onStart, onPause, onStop }) => {
+  const [isPopping, setIsPopping] = React.useState(false);
+
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
     const s = secs % 60;
@@ -20,13 +23,21 @@ export const TimerFeature: React.FC<Props> = ({ timer, onStart, onPause, onStop 
     ? Math.max(0, Math.min(100, Math.round(((timer.totalSeconds - timer.remainingSeconds) / timer.totalSeconds) * 100)))
     : 0;
 
+  const handleStartWithPop = (secs?: number, label?: string) => {
+    setIsPopping(true);
+    playPopSound();
+    setTimeout(() => setIsPopping(false), 600);
+    onStart(secs, label);
+  };
+
   const handleAddMinute = () => {
+    playPopSound();
     const nextSecs = timer.remainingSeconds + 60;
     onStart(nextSecs, timer.label);
   };
 
   return (
-    <div className="feature-pane timer-view-v2">
+    <div className={`feature-pane timer-view-v2 ${isPopping ? "timer-pop-pulse" : ""}`}>
       {/* Left side: Time read-out & Visual elapsed bar */}
       <div className="timer-main-col">
         <div className="timer-meta-row">
@@ -64,13 +75,16 @@ export const TimerFeature: React.FC<Props> = ({ timer, onStart, onPause, onStop 
       <div className="timer-controls-col">
         <div className="action-buttons">
           {!timer.running ? (
-            <button
-              className="btn-primary"
-              onClick={() => onStart(timer.remainingSeconds, timer.label)}
-              title="Start Timer (Space)"
-            >
-              <Play size={13} fill="currentColor" /> {timer.paused ? "Resume" : "Start"}
-            </button>
+            <div className="pop-btn-container">
+              {isPopping && <span className="shockwave-ring" />}
+              <button
+                className={`btn-primary ${isPopping ? "btn-spring-popping" : ""}`}
+                onClick={() => handleStartWithPop(timer.remainingSeconds, timer.label)}
+                title="Start Timer (Space)"
+              >
+                <Play size={13} fill="currentColor" /> {timer.paused ? "Resume" : "Start"}
+              </button>
+            </div>
           ) : (
             <button
               className="btn-secondary active-pause"

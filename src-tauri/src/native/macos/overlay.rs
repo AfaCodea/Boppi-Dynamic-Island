@@ -44,21 +44,22 @@ impl OverlayManager {
                 // 2. Window Level: NSStatusWindowLevel (25)
                 ns_window.setLevel(25);
 
-                // 3. Collection Behavior: CanJoinAllSpaces (1 << 0) | IgnoresCycle (1 << 6)
-                // For island, also add Stationary (1 << 4). For corner-lyrics, do not add Stationary so it can be moved anywhere.
-                let behavior_flags = if label == "corner-lyrics" {
-                    (1 << 0) | (1 << 6)
+                // 3. Collection Behavior:
+                // CanJoinAllSpaces (1 << 0) | IgnoresCycle (1 << 6) | FullScreenAuxiliary (1 << 8)
+                // FullScreenAuxiliary (1 << 8) allows the window to appear on top of Fullscreen apps (Chrome, IDE, etc.)
+                // For island, also add Stationary (1 << 4).
+                let behavior_flags = if label == "corner-lyrics" || label == "pomodoro-hud" {
+                    (1 << 0) | (1 << 6) | (1 << 8)
                 } else {
-                    (1 << 0) | (1 << 4) | (1 << 6)
+                    (1 << 0) | (1 << 4) | (1 << 6) | (1 << 8)
                 };
                 let behavior = NSWindowCollectionBehavior(behavior_flags);
                 ns_window.setCollectionBehavior(behavior);
-                if label == "corner-lyrics" {
+                if label == "corner-lyrics" || label == "pomodoro-hud" {
                     ns_window.setMovable(true);
                 }
 
-
-                // 4. Position: center for island, top-right corner for corner-lyrics
+                // 4. Position: center-top for island, top-right for lyrics, dead-center for pomodoro-hud
                 if let Some(screen) = ns_window.screen() {
                     let screen_frame = screen.frame();
                     let window_frame = ns_window.frame();
@@ -69,12 +70,17 @@ impl OverlayManager {
                     let x = if label == "corner-lyrics" {
                         screen_frame.origin.x + screen_frame.size.width - win_w - 24.0
                     } else {
+                        // Dead center horizontally for both island and pomodoro-hud
                         screen_frame.origin.x + (screen_frame.size.width - win_w) / 2.0
                     };
 
                     let y = if label == "corner-lyrics" {
                         screen_frame.origin.y + screen_frame.size.height - win_h - 40.0
+                    } else if label == "pomodoro-hud" {
+                        // Dead center vertically on the display
+                        screen_frame.origin.y + (screen_frame.size.height - win_h) / 2.0
                     } else {
+                        // Flush with top of screen under physical camera notch
                         screen_frame.origin.y + screen_frame.size.height - win_h
                     };
 
@@ -88,8 +94,10 @@ impl OverlayManager {
                     ns_window.setFrame_display(new_frame, true);
                 }
 
-                // 5. Order front without stealing key focus
-                ns_window.orderFrontRegardless();
+                // 5. Order front without stealing key focus (don't show pomodoro-hud until user triggers timer)
+                if label != "pomodoro-hud" {
+                    ns_window.orderFrontRegardless();
+                }
             }
 
             info!("macOS overlay for '{}' configured successfully", label);
@@ -99,6 +107,19 @@ impl OverlayManager {
         {
             let _ = window.set_always_on_top(true);
             info!("Non-macOS fallback overlay configured for '{}'", label);
+        }
+    }
+
+    /// Bring overlay window to front without stealing active keyboard focus
+    pub fn bring_to_front(window: &WebviewWindow) {
+        #[cfg(target_os = "macos")]
+        {
+            if let Ok(ptr) = window.ns_window() {
+                unsafe {
+                    let ns_window = &*(ptr as *mut NSWindow);
+                    ns_window.orderFrontRegardless();
+                }
+            }
         }
     }
 }
