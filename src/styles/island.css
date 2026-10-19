@@ -1,0 +1,1997 @@
+@import './animations.css';
+@import './design-tokens.css';
+
+:root {
+  /* Dynamic Island Solid Dark Finish mapped to design tokens */
+  --bg-island-solid: var(--island-bg);
+  --bg-island-border: var(--island-border);
+  --bg-card-surface: var(--island-surface);
+  --bg-card-hover: var(--island-surface-hover);
+  --bg-card-border: var(--island-border);
+
+  --text-main: var(--island-text-primary);
+  --text-secondary: var(--island-text-secondary);
+  --text-muted: var(--island-text-muted);
+
+  /* Clean Solid Accent Colors */
+  --accent-cyan: var(--island-accent-cyan);
+  --accent-blue: var(--island-accent-blue);
+  --accent-indigo: #6366f1;
+  --accent-purple: var(--island-accent-purple);
+  --accent-amber: var(--island-accent-amber);
+  --accent-emerald: var(--island-accent-green);
+
+  --accent-soft: #ffffff;
+  --accent-indicator: var(--island-accent-cyan);
+
+  --font-family: var(--island-font-family);
+
+  /* Boppi Adaptive Mascot Colors: White body & black eyes in dark mode, adaptive in light mode */
+  --boppi-body: #ffffff;
+  --boppi-eyes: #000000;
+  --boppi-glint: rgba(255, 255, 255, 0.9);
+  --boppi-rim: rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --boppi-body: #18181c;
+    --boppi-eyes: #ffffff;
+    --boppi-glint: rgba(24, 24, 28, 0.9);
+    --boppi-rim: rgba(255, 255, 255, 0.18);
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--island-focus-ring);
+  outline-offset: 1px;
+}
+
+body, html {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: transparent !important;
+  font-family: var(--font-family);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 0;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background-color: transparent !important;
+}
+
+/* Island Root Wrapper */
+.island-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  pointer-events: auto;
+  position: relative;
+}
+
+/* M-Series Notch / Solid Matte OLED Dynamic Island Shell */
+.island-shell {
+  position: relative;
+  background: var(--bg-island-solid);
+  border: 1px solid var(--bg-island-border);
+  border-top: none; /* Flushed against top screen / menu bar edge */
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  overflow: visible; /* Allows notch outer ears to render smoothly */
+  cursor: pointer;
+  outline: none;
+  transition: width 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
+              height 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
+              border-bottom-left-radius 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
+              border-bottom-right-radius 0.38s cubic-bezier(0.34, 1.35, 0.64, 1),
+              border-color 0.25s ease;
+}
+
+/* Smooth outward curved notch "ears" seamlessly fusing notch into MacBook top bezel */
+.island-shell::before,
+.island-shell::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  background: transparent;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.island-shell::before {
+  left: -14px;
+  border-top-right-radius: 12px;
+  box-shadow: 4px -4px 0 4px #000000;
+}
+
+.island-shell::after {
+  right: -14px;
+  border-top-left-radius: 12px;
+  box-shadow: -4px -4px 0 4px #000000;
+}
+
+.island-shell:focus-visible {
+  border-color: #444450;
+  box-shadow: none;
+}
+
+/* Compact Mode: Exact Apple M-Series Notch Dimensions (212px x 34px) */
+.island-shell.compact {
+  width: 212px;
+  height: 34px;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+  padding: 0;
+  justify-content: center;
+  box-shadow: none;
+}
+
+.island-shell.compact:hover {
+  width: 236px;
+  border-color: #2e2e34;
+  box-shadow: none;
+}
+
+.island-shell.compact:hover .expand-chevron {
+  opacity: 1;
+  transform: translateY(1px);
+}
+
+/* Expanded Mode: Dropping down smoothly from the notch */
+.island-shell.expanded {
+  width: 430px;
+  height: 196px;
+  border-bottom-left-radius: 28px;
+  border-bottom-right-radius: 28px;
+  padding: 10px 14px;
+  cursor: default;
+  background: #000000;
+  box-shadow: none;
+  gap: 6px;
+}
+
+
+
+
+/* Compact Content Layout */
+.compact-layout {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.compact-left {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(50% - 20px);
+  z-index: 2;
+}
+
+.compact-right {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(50% - 20px);
+  z-index: 2;
+}
+
+/* Compact clickable badge buttons */
+.compact-badge-btn {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.compact-badge-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.compact-icon-capsule {
+  width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #181820;
+  border: 1px solid #282834;
+  flex-shrink: 0;
+}
+
+.compact-icon-capsule.music-capsule.is-playing {
+  background: #2a162e;
+  border-color: #542260;
+}
+
+.compact-icon-capsule.timer-capsule {
+  background: #142230;
+  border-color: #1e3e58;
+}
+
+.compact-tabular-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--accent-cyan);
+}
+
+.timer-badge-active {
+  color: #ffffff;
+}
+
+.timer-spin-subtle {
+  color: var(--accent-cyan);
+}
+
+.music-badge-subtle {
+  color: #ffffff;
+}
+
+.compact-music-title {
+  max-width: 68px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-battery-pct {
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+.battery-charging-glyph {
+  color: var(--accent-emerald);
+}
+
+.battery-glyph {
+  color: var(--text-secondary);
+}
+
+.compact-expand-cue {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.25;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.island-shell.compact:hover .compact-expand-cue {
+  opacity: 1;
+  transform: translateX(-50%) translateY(1px);
+}
+
+.expand-chevron {
+  color: var(--island-text-secondary);
+}
+
+/* MacBook M-Series Physical Center Camera Housing */
+.notch-camera-island {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.camera-housing {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px;
+}
+
+.camera-lens {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #08080a;
+  border: 1px solid #1c1c22;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lens-glint {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #3b5072;
+}
+
+/* Authentic MacBook Green Sensor LED */
+.camera-led-green {
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: #34d399;
+}
+
+/* Audio Visualizer Mini Bars */
+.mini-equalizer-btn {
+  background: transparent;
+  border: none;
+  padding: 3px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s ease;
+}
+
+.mini-equalizer-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mini-equalizer {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 12px;
+}
+
+.mini-equalizer .bar {
+  width: 2px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+  animation: wave-bar 1.2s ease-in-out infinite;
+}
+
+.mini-equalizer .bar:nth-child(1) { height: 4px; animation-delay: 0.1s; }
+.mini-equalizer .bar:nth-child(2) { height: 11px; animation-delay: 0.3s; }
+.mini-equalizer .bar:nth-child(3) { height: 6px; animation-delay: 0.2s; }
+.mini-equalizer .bar:nth-child(4) { height: 9px; animation-delay: 0.4s; }
+
+/* Expanded Container Wrapper */
+.expanded-layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.expanded-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--island-border);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  gap: 8px;
+}
+
+.island-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-bottom: 1px solid var(--island-border);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.expanded-content-area {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.expanded-footer-dock {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--island-border-subtle);
+}
+
+.segmented-control {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2px 3px;
+  border-radius: 9px;
+  gap: 3px;
+  height: 26px;
+  align-items: center;
+}
+
+.segmented-item {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  height: 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.segmented-item.icon-only-tab {
+  padding: 0;
+  width: 24px;
+  height: 22px;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.segmented-item:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.segmented-item:active {
+  transform: scale(0.92);
+}
+
+.segmented-item.selected {
+  background: #2a2a34;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.segmented-status-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--island-accent-green);
+  flex-shrink: 0;
+}
+
+.segmented-status-dot.dot-timer {
+  background: var(--island-accent-cyan);
+}
+
+.segmented-status-dot.dot-music {
+  background: var(--island-accent-cyan);
+}
+
+.segmented-status-dot.dot-battery {
+  background: var(--island-accent-green);
+}
+
+.segmented-status-dot.dot-notification {
+  background: var(--island-accent-amber);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* macOS Traffic Close Button */
+.mac-traffic-close-btn {
+  background: #1c1c22;
+  border: 1px solid #2a2a34;
+  color: var(--text-secondary);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mac-traffic-close-btn:hover {
+  background: #ff5f56;
+  border-color: #e0443e;
+  color: #4d0000;
+}
+
+
+/* Feature Panes Common */
+.feature-pane {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  animation: slide-fade-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.island-timer-pane,
+.timer-view-v2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.island-music-pane,
+.music-view-v2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.island-battery-pane,
+.battery-view-v2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.island-settings-pane,
+.settings-view-apple {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+}
+
+.timer-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.timer-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-label-chip {
+  font-size: 10px;
+  color: var(--accent-cyan);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.live-indicator-pill {
+  font-size: 9px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #181822;
+  border: 1px solid #2e2e3e;
+  padding: 1px 7px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.1px;
+}
+
+.pulse-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+}
+
+.timer-display-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.timer-digits-large {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.timer-bump-btn {
+  background: #181820;
+  border: 1px solid #282834;
+  color: var(--accent-cyan);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.15s ease;
+}
+
+.timer-bump-btn:hover {
+  background: #242430;
+  color: #ffffff;
+}
+
+.timer-progress-track {
+  width: 170px;
+  height: 4px;
+  background: #1c1c22;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.timer-progress-fill {
+  height: 100%;
+  background: var(--accent-cyan);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.timer-controls-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: #ffffff;
+  color: #000000;
+  font-weight: 600;
+  font-size: 12px;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: #e2e2e8;
+}
+
+.btn-secondary {
+  background: #1c1c24;
+  border: 1px solid #2a2a34;
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: #282834;
+  border-color: #3e3e4c;
+}
+
+.btn-secondary.icon-only {
+  padding: 6px 8px;
+}
+
+.timer-presets-row {
+  display: flex;
+  gap: 4px;
+}
+
+.preset-chip {
+  background: #16161c;
+  border: 1px solid #24242e;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+}
+
+.preset-chip:hover {
+  background: #242432;
+  color: #ffffff;
+  border-color: #3a3a4c;
+}
+
+/* ==========================================================================
+   Music View (Apple Media Player Style)
+   ========================================================================== */
+.music-view-v2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.music-artwork-v2 {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: #181820;
+  border: 1px solid #282834;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.music-center-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.music-title-text {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffffff;
+}
+
+.music-artist-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.music-scrub-container {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+}
+
+.scrub-time {
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.music-track-bar {
+  flex: 1;
+  height: 4px;
+  background: #1c1c24;
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+}
+
+.music-bar-fill {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 2px;
+}
+
+.music-scrub-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.music-action-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.music-transport-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.transport-btn {
+  background: #16161c;
+  border: 1px solid #24242e;
+  color: var(--text-secondary);
+  padding: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.transport-btn:hover {
+  background: #242430;
+  color: #ffffff;
+}
+
+.transport-play-btn {
+  background: #ffffff;
+  border: none;
+  color: #000000;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.transport-play-btn:hover {
+  background: #e2e2e8;
+}
+
+.volume-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.volume-toggle-btn:hover {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   Battery View (Original Apple Battery Component)
+   ========================================================================== */
+.battery-view-v2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.battery-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.battery-number-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.battery-pct-large {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.battery-pill-tag {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.battery-pill-tag.charging {
+  background: #142a1e;
+  color: #34d399;
+  border: 1px solid #1c402e;
+}
+
+.battery-pill-tag.discharging {
+  background: #1c1c24;
+  color: var(--text-secondary);
+  border: 1px solid #282834;
+}
+
+.battery-bar-track {
+  width: 200px;
+  height: 4px;
+  background: #1c1c24;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.battery-bar-fill {
+  height: 100%;
+  background: #34d399;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.battery-bar-fill.low {
+  background: #ef4444;
+}
+
+.battery-sub-text {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.battery-side-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.battery-icon-display {
+  color: #34d399;
+}
+
+.battery-health-chip {
+  background: #16161e;
+  border: 1px solid #262634;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================================================
+   Lyrics View (Apple Music Style Karaoke)
+   ========================================================================== */
+.lyrics-view-v2 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.lyrics-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #1c1c24;
+  margin-bottom: 4px;
+}
+
+.lyrics-track-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.lyrics-mic-icon {
+  color: var(--text-secondary);
+}
+
+.lyrics-song-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.lyrics-artist-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.lyrics-sync-badge {
+  font-size: 9px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: #16161e;
+  border: 1px solid #242430;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.karaoke-scroll-box {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  overflow-y: auto;
+  height: 100%;
+  padding: 8px 4px 28px 4px;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  scrollbar-width: none;
+}
+
+.karaoke-scroll-box::-webkit-scrollbar {
+  display: none;
+}
+
+.karaoke-line {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1.4;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  transform-origin: left center;
+}
+
+.karaoke-line:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.karaoke-line.active {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  transform: scale(1.02);
+}
+
+/* ==========================================================================
+   Settings View (Apple macOS Settings System Control Component)
+   ========================================================================== */
+.settings-view-apple {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+}
+
+/* Apple-style Interactive Mascot Profile Card in Settings */
+.boppi-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #14141a;
+  border: 1px solid #242430;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  transition: border-color 0.15s ease;
+}
+
+.boppi-profile-card:hover {
+  border-color: #343446;
+}
+
+.boppi-profile-avatar-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.boppi-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.boppi-profile-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.boppi-title-main {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.1px;
+}
+
+.boppi-badge-pill {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  border-radius: 4px;
+  padding: 0 4px;
+  line-height: 1.3;
+}
+
+.boppi-interactive-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 8.5px;
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  border-radius: 4px;
+  padding: 0 4px;
+  line-height: 1.3;
+}
+
+.boppi-profile-sub {
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mac-settings-group {
+  background: #121216;
+  border: 1px solid #202028;
+  border-radius: 8px;
+  padding: 2px 10px;
+}
+
+.mac-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.mac-settings-divider {
+  height: 1px;
+  background: #1c1c24;
+  width: 100%;
+}
+
+.mac-settings-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mac-settings-icon {
+  color: var(--text-secondary);
+}
+
+.mac-settings-icon.icon-display {
+  color: var(--accent-cyan);
+}
+
+.mac-settings-icon.icon-lyrics {
+  color: var(--accent-purple);
+}
+
+.mac-settings-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mac-settings-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.mac-settings-sub {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* Apple iOS/macOS Toggle Switch */
+.mac-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mac-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mac-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #2a2a34;
+  border-radius: 18px;
+  transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mac-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mac-toggle-switch input:checked + .mac-toggle-slider {
+  background-color: #34c759;
+}
+
+.mac-toggle-switch input:checked + .mac-toggle-slider:before {
+  transform: translateX(14px);
+}
+
+.mac-settings-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.mac-shortcut-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mac-kbd {
+  background: #181820;
+  border: 1px solid #282834;
+  color: var(--text-secondary);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 10px;
+}
+
+.mac-system-version {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================================================
+   Floating MP3 Desktop Lyrics (Text-Only Vertical Roll HUD)
+   ========================================================================== */
+.corner-lyrics-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  background: transparent !important;
+}
+
+.floating-mp3-lyrics {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding: 2px 8px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+  position: relative;
+}
+
+.floating-mp3-lyrics:active {
+  cursor: grabbing;
+}
+
+.corner-lyrics-mascot-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* Viewport masking for classic bottom-to-top MP3 lyric roll */
+.mp3-lyrics-viewport {
+  flex: 1;
+  min-width: 0;
+  height: 50px;
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+}
+
+.mp3-lyrics-track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mp3-lyric-row {
+  height: 25px;
+  line-height: 25px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-family: var(--font-family);
+  transition: color 0.35s ease, font-size 0.35s ease, opacity 0.35s ease, transform 0.35s ease;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.mp3-lyric-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.mp3-lyric-row.active {
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.15px;
+  opacity: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 1px #000000;
+}
+
+.mp3-lyric-row.next {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.65;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+  transform: translateY(1px);
+}
+
+.mp3-lyric-row.faded-past {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 10.5px;
+  font-weight: 400;
+  opacity: 0.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.mp3-lyric-row.faded {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 10.5px;
+  font-weight: 400;
+  opacity: 0.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.floating-mp3-lyrics:hover .mp3-lyric-row.active {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 1), 0 0 12px rgba(56, 189, 248, 0.35);
+}
+
+/* ==========================================================================
+   Original Component Library Styles (Section 6 & 9 Design Tokens)
+   ========================================================================== */
+
+/* IslandActionButton */
+.island-action-btn {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: var(--island-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--island-motion-fast) ease;
+}
+
+.island-action-btn:active {
+  transform: scale(0.97);
+}
+
+.island-action-btn.variant-primary {
+  background: var(--island-text-primary);
+  color: var(--island-bg);
+  font-weight: 600;
+}
+
+.island-action-btn.variant-primary:hover {
+  background: #e2e2e8;
+}
+
+.island-action-btn.variant-secondary {
+  background: var(--island-surface-raised);
+  border-color: var(--island-border);
+  color: var(--island-text-primary);
+}
+
+.island-action-btn.variant-secondary:hover {
+  background: var(--island-surface-hover);
+  border-color: var(--island-border-focus);
+}
+
+.island-action-btn.variant-ghost {
+  background: transparent;
+  color: var(--island-text-secondary);
+}
+
+.island-action-btn.variant-ghost:hover {
+  background: var(--island-surface-hover);
+  color: var(--island-text-primary);
+}
+
+.island-action-btn.variant-danger {
+  background: rgba(255, 69, 58, 0.15);
+  border-color: rgba(255, 69, 58, 0.3);
+  color: var(--island-accent-red);
+}
+
+.island-action-btn.variant-danger:hover {
+  background: rgba(255, 69, 58, 0.25);
+}
+
+.island-action-btn.icon-only {
+  padding: 5px 8px;
+}
+
+.island-btn-shortcut {
+  font-size: 9px;
+  padding: 1px 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  color: var(--island-text-muted);
+}
+
+/* IslandIconButton */
+.island-icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--island-radius-md);
+  color: var(--island-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--island-motion-fast) ease;
+  padding: 0;
+}
+
+.island-icon-btn:hover {
+  background: var(--island-surface-hover);
+  color: var(--island-text-primary);
+}
+
+.island-icon-btn:active {
+  transform: scale(0.94);
+}
+
+.island-icon-btn.is-active {
+  background: var(--island-surface-active);
+  color: var(--island-text-primary);
+  border-color: var(--island-border);
+}
+
+/* IslandProgressBar */
+.island-progress-track {
+  width: 100%;
+  background: var(--island-surface-raised);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  transition: height var(--island-motion-fast) ease;
+}
+
+.island-progress-track.is-seekable {
+  cursor: pointer;
+}
+
+.island-progress-track.is-seekable:hover {
+  height: 6px;
+}
+
+.island-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width var(--island-motion-fast) ease;
+}
+
+.island-progress-fill.color-cyan { background: var(--island-accent-cyan); }
+.island-progress-fill.color-green { background: var(--island-accent-green); }
+.island-progress-fill.color-amber { background: var(--island-accent-amber); }
+.island-progress-fill.color-purple { background: var(--island-accent-purple); }
+.island-progress-fill.color-red { background: var(--island-accent-red); }
+.island-progress-fill.color-white { background: var(--island-text-primary); }
+
+.island-progress-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  pointer-events: none;
+}
+
+/* IslandStatusIndicator */
+.island-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: var(--island-radius-sm);
+  background: var(--island-surface);
+  border: 1px solid var(--island-border);
+  color: var(--island-text-secondary);
+}
+
+.island-status-badge .status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--island-text-muted);
+}
+
+.island-status-badge.variant-active .status-dot { background: var(--island-accent-cyan); }
+.island-status-badge.variant-charging .status-dot { background: var(--island-accent-green); }
+.island-status-badge.variant-warning .status-dot { background: var(--island-accent-amber); }
+.island-status-badge.variant-alert .status-dot { background: var(--island-accent-red); }
+
+/* IslandTooltip */
+.island-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.island-tooltip-bubble {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e1e26;
+  border: 1px solid var(--island-border);
+  color: var(--island-text-primary);
+  font-size: 10px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  animation: slide-fade-in var(--island-motion-fast) ease forwards;
+}
+
+/* IslandNotification Banner */
+.island-notification-banner {
+  background: #14141c;
+  border: 1px solid var(--island-border);
+  border-radius: var(--island-radius-md);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slide-fade-in var(--island-motion-fast) ease forwards;
+}
+
+.notif-leading-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-icon-category.timer { color: var(--island-accent-cyan); }
+.notif-icon-category.battery { color: var(--island-accent-green); }
+.notif-icon-category.music { color: var(--island-accent-purple); }
+.notif-icon-category.default { color: var(--island-accent-amber); }
+
+.notif-content-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.notif-header-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.notif-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--island-text-primary);
+}
+
+.notif-time {
+  font-size: 9px;
+  color: var(--island-text-muted);
+}
+
+.notif-message {
+  font-size: 10px;
+  color: var(--island-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notif-actions-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notif-dismiss-btn {
+  background: transparent;
+  border: none;
+  color: var(--island-text-muted);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.notif-dismiss-btn:hover {
+  color: var(--island-text-primary);
+}
+
+/* IslandQuickActions Grid */
+.island-quick-actions-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.quick-action-card {
+  flex: 1;
+  min-width: 0;
+  background: var(--island-surface);
+  border: 1px solid var(--island-border);
+  border-radius: var(--island-radius-md);
+  padding: 0 6px;
+  height: 26px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all var(--island-motion-fast) ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.quick-action-card:hover {
+  background: var(--island-surface-hover);
+  border-color: var(--island-border-focus);
+}
+
+.quick-action-card:active {
+  transform: scale(0.96);
+}
+
+.quick-action-icon-wrap {
+  color: var(--island-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.quick-action-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.quick-action-title {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--island-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-action-badge {
+  font-size: 8px;
+  color: var(--island-text-muted);
+  background: var(--island-surface-raised);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: inherit;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* IslandContextMenu */
+.island-context-menu {
+  position: fixed;
+  background: #16161e;
+  border: 1px solid var(--island-border);
+  border-radius: var(--island-radius-md);
+  padding: 4px;
+  min-width: 150px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: slide-fade-in var(--island-motion-fast) ease forwards;
+}
+
+.context-menu-item {
+  background: transparent;
+  border: none;
+  border-radius: var(--island-radius-sm);
+  color: var(--island-text-primary);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--island-motion-fast) ease;
+}
+
+.context-menu-item:hover {
+  background: var(--island-surface-hover);
+}
+
+.context-menu-item.is-danger {
+  color: var(--island-accent-red);
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: var(--island-border);
+  margin: 2px 0;
+}
+
+.context-menu-shortcut {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--island-text-muted);
+}
+
+/* macOS Select Picker */
+.mac-select-picker {
+  background: var(--island-surface-raised);
+  border: 1px solid var(--island-border);
+  color: var(--island-text-primary);
+  font-family: inherit;
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: var(--island-radius-sm);
+  outline: none;
+  cursor: pointer;
+}
+
+.mac-select-picker:focus {
+  border-color: var(--island-border-focus);
+}
+
+/* Reduced Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   Boppi Mascot Styles (Funny · Playful · Memorable)
+   ========================================================================== */
+
+.boppi-avatar-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.boppi-avatar-wrapper.is-interactive {
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.22s cubic-bezier(0.34, 1.35, 0.64, 1);
+}
+
+.boppi-avatar-wrapper.is-interactive:hover {
+  transform: scale(1.14);
+}
+
+.boppi-avatar-wrapper.is-interactive:active {
+  transform: scale(0.9);
+}
+
+.boppi-mascot-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: none !important;
+}
+
+.boppi-mascot-svg.squish-bop {
+  animation: boppi-squish 0.45s cubic-bezier(0.34, 1.35, 0.64, 1) !important;
+}
+
+.boppi-mascot-svg.groove-bop {
+  animation: boppi-groove 1.4s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+.boppi-mascot-svg:not(.squish-bop):not(.groove-bop) {
+  animation: boppi-idle-float 3.5s ease-in-out infinite;
+}
+
+/* Playful Floating Speech Bubble */
+.boppi-speech-bubble {
+  position: absolute;
+  z-index: 10000;
+  pointer-events: none;
+  white-space: nowrap;
+  background: rgba(18, 18, 22, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 4px 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 12px rgba(99, 102, 241, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boppi-bubble-text {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Caret & Placements */
+.boppi-speech-bubble.placement-bottom {
+  top: calc(100% + 8px);
+  left: 50%;
+  animation: boppi-bubble-pop-bottom 0.35s cubic-bezier(0.34, 1.35, 0.64, 1) forwards;
+}
+
+.boppi-speech-bubble.placement-bottom .boppi-bubble-caret {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 7px;
+  height: 7px;
+  background: rgba(18, 18, 22, 0.95);
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.boppi-speech-bubble.placement-top {
+  bottom: calc(100% + 8px);
+  left: 50%;
+  animation: boppi-bubble-pop 0.35s cubic-bezier(0.34, 1.35, 0.64, 1) forwards;
+}
+
+.boppi-speech-bubble.placement-top .boppi-bubble-caret {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 7px;
+  height: 7px;
+  background: rgba(18, 18, 22, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+/* Header & Compact specific adjustments */
+.compact-boppi {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.header-boppi {
+  cursor: pointer;
+  pointer-events: auto;
+}
+

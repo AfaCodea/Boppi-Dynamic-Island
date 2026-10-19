@@ -1,0 +1,72 @@
+/**
+ * Design Tokens for macOS Dynamic Island (MacBook Pro 14" & 16" M1 Pro/Max 2021)
+ * Authentic Apple macOS Dark Surface Aesthetics & Notch Ergonomics
+ */
+
+:root {
+  /* Surface & Background (Matte Jet Black OLED + Apple Dark System Layers) */
+  --island-bg: #000000;
+  --island-surface: #121216;
+  --island-surface-raised: #181820;
+  --island-surface-hover: #22222a;
+  --island-surface-active: #2a2a34;
+
+  /* Borders & Dividers */
+  --island-border: #24242e;
+  --island-border-subtle: #1a1a20;
+  --island-border-focus: #3e3e4e;
+  --island-focus-ring: rgba(56, 189, 248, 0.45);
+
+  /* Typography Colors */
+  --island-text-primary: #ffffff;
+  --island-text-secondary: #9e9ea6;
+  --island-text-muted: #666672;
+  --island-text-subtle: #4a4a54;
+
+  /* Restrained Apple Accent Colors */
+  --island-accent-cyan: #38bdf8;
+  --island-accent-blue: #3b82f6;
+  --island-accent-green: #34c759;
+  --island-accent-amber: #f59e0b;
+  --island-accent-red: #ff453a;
+  --island-accent-purple: #a855f7;
+
+  /* MacBook Pro 14" & 16" (2021) Physical Notch Dimensions */
+  --island-notch-width: 212px;
+  --island-notch-height: 34px;
+  --island-compact-hover-width: 236px;
+  --island-expanded-width: 430px;
+  --island-expanded-height: 196px;
+
+  /* Corner Radii */
+  --island-radius-compact: 18px;
+  --island-radius-expanded: 28px;
+  --island-radius-pill: 999px;
+  --island-radius-lg: 12px;
+  --island-radius-md: 8px;
+  --island-radius-sm: 6px;
+
+  /* Spacing Grid (Apple HIG 4pt/8pt based) */
+  --island-space-1: 2px;
+  --island-space-2: 4px;
+  --island-space-3: 6px;
+  --island-space-4: 8px;
+  --island-space-5: 10px;
+  --island-space-6: 12px;
+  --island-space-8: 16px;
+
+  /* Animation Timings & Easing (MacBook Motion Curve) */
+  --island-motion-fast: 150ms;
+  --island-motion-normal: 220ms;
+  --island-motion-expand: 240ms;
+  --island-motion-curve: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Typography */
+  --island-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --island-font-size-xs: 9px;
+  --island-font-size-sm: 10px;
+  --island-font-size-base: 11px;
+  --island-font-size-md: 13px;
+  --island-font-size-lg: 15px;
+  --island-font-size-timer: 28px;
+}
