@@ -21,7 +21,7 @@ export const MusicFeature: React.FC<Props> = ({ music, onTogglePlay }) => {
     <div className="feature-pane music-view-v2">
       {/* Album Artwork with subtle pulse when playing */}
       <div className={`music-artwork-v2 ${music.isPlaying ? "is-playing" : ""}`}>
-        <Music size={22} color="#ffffff" />
+        <Music size={22} color="currentColor" />
         {music.isPlaying && <div className="artwork-playing-glow" />}
       </div>
 

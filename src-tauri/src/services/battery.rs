@@ -32,9 +32,50 @@ impl BatteryService {
                     .unwrap_or_default();
 
                 if state.percentage != last_pct || state.is_charging != last_charging {
+                    let old_charging = last_charging;
+                    let old_pct = last_pct;
                     last_pct = state.percentage;
                     last_charging = state.is_charging;
                     emit_battery_updated(&app, &state);
+
+                    // Connected notifications for battery changes
+                    if state.is_charging && !old_charging && old_pct > 0 {
+                        crate::events::emit_notification(
+                            &app,
+                            &crate::events::NotificationPayload {
+                                id: format!("batt-charge-{}", state.percentage),
+                                title: "Charger Terhubung ⚡".to_string(),
+                                message: format!("Baterai {}% • Pengisian daya aktif", state.percentage),
+                                category: Some("battery".to_string()),
+                                time_label: Some("Now".to_string()),
+                                action_label: None,
+                            },
+                        );
+                    } else if !state.is_charging && old_charging && old_pct > 0 {
+                        crate::events::emit_notification(
+                            &app,
+                            &crate::events::NotificationPayload {
+                                id: format!("batt-unplug-{}", state.percentage),
+                                title: "Mode Baterai 🔋".to_string(),
+                                message: format!("Sisa baterai {}%", state.percentage),
+                                category: Some("battery".to_string()),
+                                time_label: Some("Now".to_string()),
+                                action_label: None,
+                            },
+                        );
+                    } else if state.percentage <= 20 && !state.is_charging && old_pct > 20 {
+                        crate::events::emit_notification(
+                            &app,
+                            &crate::events::NotificationPayload {
+                                id: format!("batt-low-{}", state.percentage),
+                                title: "Baterai Lemah ⚠️".to_string(),
+                                message: format!("Sisa baterai {}%. Segera sambungkan pengisi daya.", state.percentage),
+                                category: Some("battery".to_string()),
+                                time_label: Some("Now".to_string()),
+                                action_label: None,
+                            },
+                        );
+                    }
                 }
 
                 sleep(Duration::from_secs(5)).await;

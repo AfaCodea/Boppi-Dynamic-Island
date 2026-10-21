@@ -13,10 +13,10 @@ impl MusicService {
         #[cfg(target_os = "macos")]
         {
             let script = r#"
-tell application "System Events"
-    set isSpotifyRunning to (name of processes) contains "Spotify"
-    set isMusicRunning to (name of processes) contains "Music"
-end tell
+set isSpotifyRunning to false
+if application "Spotify" is running then set isSpotifyRunning to true
+set isMusicRunning to false
+if application "Music" is running then set isMusicRunning to true
 
 set spotifyState to "stopped"
 if isSpotifyRunning then
@@ -148,6 +148,7 @@ return "none|||stopped||||||||||||0|||0"
             let mut last_title = String::new();
             let mut last_is_playing = false;
             let mut last_pos = 0u64;
+            let mut is_first_run = true;
 
             loop {
                 sleep(Duration::from_millis(1000)).await;
@@ -189,6 +190,21 @@ return "none|||stopped||||||||||||0|||0"
                                     text: format!("Album: {}", music.album),
                                 },
                             ];
+
+                            // Connected notification only when track genuinely changes, never on first startup
+                            if !is_first_run && !music.title.is_empty() && music.title != "Connecting to Media..." {
+                                crate::events::emit_notification(
+                                    &app,
+                                    &crate::events::NotificationPayload {
+                                        id: format!("track-{}", music.title),
+                                        title: "Now Playing 🎵".to_string(),
+                                        message: format!("{} • {}", music.title, music.artist),
+                                        category: Some("music".to_string()),
+                                        time_label: Some("Now".to_string()),
+                                        action_label: Some("Buka Lirik".to_string()),
+                                    },
+                                );
+                            }
                         }
 
                         let should_emit = track_changed
@@ -198,6 +214,7 @@ return "none|||stopped||||||||||||0|||0"
                         last_title = music.title.clone();
                         last_is_playing = music.is_playing;
                         last_pos = music.progress_seconds;
+                        is_first_run = false;
 
                         if should_emit {
                             Some(music.clone())
@@ -205,6 +222,7 @@ return "none|||stopped||||||||||||0|||0"
                             None
                         }
                     } else {
+                        is_first_run = false;
                         // Fallback: If no real app running, simulate tick if user started play
                         if music.is_playing && music.duration_seconds > 0 {
                             music.progress_seconds =
@@ -228,10 +246,10 @@ return "none|||stopped||||||||||||0|||0"
         #[cfg(target_os = "macos")]
         {
             let script = r#"
-tell application "System Events"
-    set isSpotifyRunning to (name of processes) contains "Spotify"
-    set isMusicRunning to (name of processes) contains "Music"
-end tell
+set isSpotifyRunning to false
+if application "Spotify" is running then set isSpotifyRunning to true
+set isMusicRunning to false
+if application "Music" is running then set isMusicRunning to true
 
 if isSpotifyRunning then
     tell application "Spotify" to playpause
@@ -251,10 +269,10 @@ end if
         #[cfg(target_os = "macos")]
         {
             let script = r#"
-tell application "System Events"
-    set isSpotifyRunning to (name of processes) contains "Spotify"
-    set isMusicRunning to (name of processes) contains "Music"
-end tell
+set isSpotifyRunning to false
+if application "Spotify" is running then set isSpotifyRunning to true
+set isMusicRunning to false
+if application "Music" is running then set isMusicRunning to true
 
 if isSpotifyRunning then
     tell application "Spotify" to next track
@@ -273,10 +291,10 @@ end if
         #[cfg(target_os = "macos")]
         {
             let script = r#"
-tell application "System Events"
-    set isSpotifyRunning to (name of processes) contains "Spotify"
-    set isMusicRunning to (name of processes) contains "Music"
-end tell
+set isSpotifyRunning to false
+if application "Spotify" is running then set isSpotifyRunning to true
+set isMusicRunning to false
+if application "Music" is running then set isMusicRunning to true
 
 if isSpotifyRunning then
     tell application "Spotify" to previous track
@@ -296,10 +314,10 @@ end if
         {
             let script = format!(
                 r#"
-tell application "System Events"
-    set isSpotifyRunning to (name of processes) contains "Spotify"
-    set isMusicRunning to (name of processes) contains "Music"
-end tell
+set isSpotifyRunning to false
+if application "Spotify" is running then set isSpotifyRunning to true
+set isMusicRunning to false
+if application "Music" is running then set isMusicRunning to true
 
 if isSpotifyRunning then
     tell application "Spotify" to set player position to {}

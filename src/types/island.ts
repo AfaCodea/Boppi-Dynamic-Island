@@ -2,6 +2,18 @@ export type IslandMode = "compact" | "expanded" | "hidden";
 
 export type FeatureTab = "timer" | "music" | "lyrics" | "battery" | "settings";
 
+export type ThemePreference = "auto" | "dark" | "light";
+
+export type ResolvedTheme = "dark" | "light";
+
+export interface ThemeState {
+  preference: ThemePreference;
+  resolvedTheme: ResolvedTheme;
+  backgroundLuminance: "dark" | "light";
+  luminanceScore: number;
+  activeApp: string;
+}
+
 export interface LyricLine {
   id: number;
   timeMs: number;
@@ -75,7 +87,10 @@ export interface IslandState {
   timer: TimerState;
   music: MusicState;
   battery: BatteryState;
+  theme: ThemeState;
   notification?: IslandNotificationItem | null;
+  hasHardwareNotch?: boolean;
+  isLocked?: boolean;
 }
 
 export interface AppSettings {

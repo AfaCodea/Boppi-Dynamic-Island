@@ -111,6 +111,50 @@ pub struct IslandNotification {
     pub category: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum ThemePreference {
+    #[default]
+    Auto,
+    Dark,
+    Light,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum ResolvedTheme {
+    #[default]
+    Dark,
+    Light,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThemeState {
+    /// User preference: "auto" (invert against active app/screen), "dark", or "light"
+    pub preference: ThemePreference,
+    /// Resulting UI theme applied to Boppi ("dark" = black UI, "light" = white UI)
+    pub resolved_theme: ResolvedTheme,
+    /// Detected background luminance beneath Boppi ("dark" or "light")
+    pub background_luminance: String,
+    /// Numeric relative luminance (0.0 = pure black, 1.0 = pure white)
+    pub luminance_score: f32,
+    /// Currently detected frontmost macOS application name
+    pub active_app: String,
+}
+
+impl Default for ThemeState {
+    fn default() -> Self {
+        Self {
+            preference: ThemePreference::Auto,
+            resolved_theme: ResolvedTheme::Light, // Default to White UI when over dark apps
+            background_luminance: "dark".to_string(),
+            luminance_score: 0.12,
+            active_app: "Desktop".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
@@ -118,6 +162,7 @@ pub struct AppSettings {
     pub auto_hide_fullscreen: bool,
     pub show_corner_lyrics: bool,
     pub telemetry_rate_ms: u64,
+    pub theme_preference: ThemePreference,
 }
 
 impl Default for AppSettings {
@@ -127,6 +172,7 @@ impl Default for AppSettings {
             auto_hide_fullscreen: true,
             show_corner_lyrics: true,
             telemetry_rate_ms: 1000,
+            theme_preference: ThemePreference::Auto,
         }
     }
 }
@@ -141,6 +187,7 @@ pub struct AppStateInner {
     pub battery: Mutex<BatteryState>,
     pub notification: Mutex<Option<IslandNotification>>,
     pub settings: Mutex<AppSettings>,
+    pub theme: Mutex<ThemeState>,
 }
 
 impl Default for AppState {
@@ -152,6 +199,7 @@ impl Default for AppState {
             battery: Mutex::new(BatteryState::default()),
             notification: Mutex::new(None),
             settings: Mutex::new(AppSettings::default()),
+            theme: Mutex::new(ThemeState::default()),
         }))
     }
 }

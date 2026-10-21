@@ -11,10 +11,71 @@
 
 @keyframes wave-bar {
   0%, 100% {
-    height: 4px;
+    transform: scaleY(0.25);
   }
   50% {
-    height: 16px;
+    transform: scaleY(1);
+  }
+}
+
+/* Smooth Apple Liquid Audio Wave Physics: Bar 1 Bass & Kick */
+@keyframes eq-bar-bass {
+  0%, 100% {
+    transform: scaleY(0.32);
+  }
+  38% {
+    transform: scaleY(0.92);
+  }
+  68% {
+    transform: scaleY(0.46);
+  }
+}
+
+/* Smooth Apple Liquid Audio Wave Physics: Bar 2 Low-Mid / Rhythm */
+@keyframes eq-bar-rhythm {
+  0%, 100% {
+    transform: scaleY(0.42);
+  }
+  28% {
+    transform: scaleY(0.34);
+  }
+  65% {
+    transform: scaleY(1.0);
+  }
+}
+
+/* Smooth Apple Liquid Audio Wave Physics: Bar 3 Melodi & Vokal */
+@keyframes eq-bar-melody {
+  0%, 100% {
+    transform: scaleY(0.35);
+  }
+  26% {
+    transform: scaleY(0.84);
+  }
+  52% {
+    transform: scaleY(0.42);
+  }
+  76% {
+    transform: scaleY(0.88);
+  }
+}
+
+/* Smooth Apple Liquid Audio Wave Physics: Bar 4 Treble & Sparkle */
+@keyframes eq-bar-treble {
+  0%, 100% {
+    transform: scaleY(0.3);
+  }
+  22% {
+    transform: scaleY(0.72);
+  }
+  48% {
+    transform: scaleY(0.38);
+  }
+  72% {
+    transform: scaleY(0.8);
+  }
+  88% {
+    transform: scaleY(0.48);
   }
 }
 
@@ -246,6 +307,125 @@
     transform: translateY(0) scale(1);
     filter: blur(0px);
   }
+}
+
+/* ==========================================================================
+   Dynamic Island Lyrics Jump-Out and Jump-In Physics Animations (Staged)
+   ========================================================================== */
+
+/* Stage 1: Cute Mascot Icon Jumps OUT from Dynamic Island */
+@keyframes lyric-icon-jump-out {
+  0% {
+    opacity: 0;
+    transform: translateY(-26px) scale(0.72);
+  }
+  24% {
+    opacity: 1;
+  }
+  48% {
+    /* Touchdown: soft, gentle organic squash without face distortion */
+    transform: translateY(4.5px) scale(1.035, 0.965);
+  }
+  70% {
+    /* Gentle elastic rebound */
+    transform: translateY(-1.8px) scale(0.99, 1.01);
+  }
+  86% {
+    /* Micro settle */
+    transform: translateY(0.4px) scale(1.002, 0.998);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+/* Stage 2: Cute Mascot Icon Leaps IN and Gets Swallowed by Dynamic Island */
+@keyframes lyric-icon-jump-in {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1, 1);
+  }
+  20% {
+    /* Subtle anticipation crouch */
+    transform: translateY(2.5px) scale(1.035, 0.965);
+    opacity: 1;
+  }
+  52% {
+    /* High-velocity upward leap into notch */
+    transform: translateY(-14px) scale(0.94, 1.06);
+    opacity: 0.92;
+  }
+  80% {
+    /* Passing behind the notch capsule */
+    transform: translateY(-24px) scale(0.72, 0.82);
+    opacity: 0.45;
+  }
+  100% {
+    /* Swallowed cleanly into notch */
+    opacity: 0;
+    transform: translateY(-28px) scale(0.38, 0.38);
+  }
+}
+
+.floating-mp3-lyrics.anim-icon-jumping-out {
+  animation: lyric-icon-jump-out 0.44s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.floating-mp3-lyrics.anim-icon-jumping-in {
+  animation: lyric-icon-jump-in 0.36s cubic-bezier(0.38, 0, 0.24, 1) forwards;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* Dynamic Island eject bounce when shooting out lyrics */
+.island-shell.compact.ejecting-lyrics {
+  animation: island-eject-squash 0.44s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center top;
+}
+
+@keyframes island-eject-squash {
+  0% { transform: scale(1, 1); }
+  30% { transform: scale(1.04, 0.97) translateY(1.5px); }
+  65% { transform: scale(0.99, 1.01) translateY(-0.5px); }
+  100% { transform: scale(1, 1) translateY(0); }
+}
+
+/* Dynamic Island swallow bounce when catching lyrics */
+.island-shell.compact.swallowing-lyrics {
+  animation: island-swallow-catch 0.40s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center top;
+}
+
+@keyframes island-swallow-catch {
+  0% { transform: scale(1, 1); }
+  35% { transform: scale(1.05, 1.03) translateY(2px); }
+  70% { transform: scale(0.99, 0.99) translateY(-0.5px); }
+  100% { transform: scale(1, 1) translateY(0); }
+}
+
+/* Smart Wake: Dynamic Island playful greeting bounce upon unlocking macOS */
+@keyframes island-welcome-bop {
+  0% {
+    transform: scale(0.9, 0.82) translateY(-6px);
+    opacity: 0.6;
+  }
+  45% {
+    transform: scale(1.08, 1.05) translateY(4px);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.97, 0.98) translateY(-1px);
+  }
+  100% {
+    transform: scale(1, 1) translateY(0);
+  }
+}
+
+.compact-layout.island-welcome-bounce {
+  animation: island-welcome-bop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: center top;
 }
 
 

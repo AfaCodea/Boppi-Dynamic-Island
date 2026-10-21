@@ -1,12 +1,15 @@
 import { useEffect, useRef } from "react";
 import { listen, UnlistenFn } from "@tauri-apps/api/event";
-import { TimerState, MusicState, BatteryState, IslandMode } from "../types/island";
+import { TimerState, MusicState, BatteryState, IslandMode, ThemeState, IslandNotificationItem } from "../types/island";
 
 interface NativeEventListeners {
   onTimerTick?: (state: TimerState) => void;
   onMusicChanged?: (state: MusicState) => void;
   onBatteryUpdated?: (state: BatteryState) => void;
   onStateChanged?: (state: { mode: IslandMode }) => void;
+  onThemeChanged?: (state: ThemeState) => void;
+  onNotification?: (notification: IslandNotificationItem) => void;
+  onSystemLockChanged?: (isLocked: boolean) => void;
 }
 
 export function useNativeEvents(listeners: NativeEventListeners) {
@@ -38,6 +41,21 @@ export function useNativeEvents(listeners: NativeEventListeners) {
           if (isMounted) listenersRef.current.onStateChanged?.(event.payload);
         });
         unlisteners.push(uState);
+
+        const uTheme = await listen<ThemeState>("theme-changed", (event) => {
+          if (isMounted) listenersRef.current.onThemeChanged?.(event.payload);
+        });
+        unlisteners.push(uTheme);
+
+        const uNotif = await listen<IslandNotificationItem>("island-notification", (event) => {
+          if (isMounted) listenersRef.current.onNotification?.(event.payload);
+        });
+        unlisteners.push(uNotif);
+
+        const uLock = await listen<boolean>("system-lock-state", (event) => {
+          if (isMounted) listenersRef.current.onSystemLockChanged?.(event.payload);
+        });
+        unlisteners.push(uLock);
       } catch {
         // Fallback for browser preview mode
       }

@@ -53,3 +53,35 @@ export const playPopSound = () => {
     // Non-fatal if audio context not available
   }
 };
+
+/**
+ * Playful suction/suck-in chime when lyrics leap back into the dynamic island.
+ */
+export const playSwallowSound = () => {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    // Pitch ramp downward and snap up into notch
+    osc.frequency.setValueAtTime(820, now);
+    osc.frequency.exponentialRampToValueAtTime(320, now + 0.045);
+    osc.frequency.exponentialRampToValueAtTime(1050, now + 0.08);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.14, now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } catch {
+    // Non-fatal
+  }
+};

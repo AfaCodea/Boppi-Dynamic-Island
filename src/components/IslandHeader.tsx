@@ -1,5 +1,5 @@
-import { Clock, Music, Mic2, BatteryCharging, Settings, X } from "lucide-react";
-import { FeatureTab } from "../types/island";
+import { Clock, Music, Mic2, BatteryCharging, Settings, X, Sun, Moon, Sparkles } from "lucide-react";
+import { FeatureTab, ThemeState } from "../types/island";
 
 export interface IslandHeaderProps {
   /** Active selected feature tab */
@@ -16,11 +16,15 @@ export interface IslandHeaderProps {
   batteryCharging?: boolean;
   /** Optional notification active indicator */
   hasNotification?: boolean;
+  /** Current adaptive theme state */
+  theme?: ThemeState;
+  /** Quick cycle theme preference callback */
+  onCycleTheme?: () => void;
 }
 
 /**
- * IslandHeader: Authentic Apple macOS Segmented Picker with active indicator dots
- * and circular traffic close trigger.
+ * IslandHeader: Authentic Apple macOS Segmented Picker with active indicator dots,
+ * adaptive contrast quick-toggle, and circular traffic close trigger.
  */
 export const IslandHeader: React.FC<IslandHeaderProps> = ({
   activeTab,
@@ -30,7 +34,18 @@ export const IslandHeader: React.FC<IslandHeaderProps> = ({
   musicPlaying = false,
   batteryCharging = false,
   hasNotification = false,
+  theme,
+  onCycleTheme,
 }) => {
+  const pref = theme?.preference ?? "auto";
+  const resolved = theme?.resolvedTheme ?? "light";
+  const activeApp = theme?.activeApp || "Desktop";
+
+  const themeTitle =
+    pref === "auto"
+      ? `Smart Contrast (Auto): ${resolved === "light" ? "White UI" : "Black UI"} di atas ${activeApp} • Klik untuk ganti mode`
+      : `Mode Manual: ${pref === "light" ? "White (Terang)" : "Black (Gelap)"} • Klik untuk ganti mode`;
+
   return (
     <header className="island-header-bar" role="banner">
       {/* Native Apple macOS Segmented Control */}
@@ -95,8 +110,29 @@ export const IslandHeader: React.FC<IslandHeaderProps> = ({
         </button>
       </nav>
 
-      {/* Traffic light collapse trigger */}
+      {/* Adaptive Theme Quick-Toggle & Traffic Light Collapse Trigger */}
       <div className="header-actions">
+        {onCycleTheme && (
+          <button
+            type="button"
+            className={`theme-adaptive-pill mode-${pref}`}
+            onClick={onCycleTheme}
+            title={themeTitle}
+            aria-label={themeTitle}
+          >
+            {pref === "auto" ? (
+              <Sparkles size={10} />
+            ) : resolved === "light" ? (
+              <Sun size={10} />
+            ) : (
+              <Moon size={10} />
+            )}
+            <span className="theme-pill-label">
+              {pref === "auto" ? `Auto • ${activeApp}` : pref === "light" ? "White" : "Black"}
+            </span>
+          </button>
+        )}
+
         <button
           type="button"
           className="mac-traffic-close-btn"

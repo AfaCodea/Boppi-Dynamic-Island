@@ -131,10 +131,12 @@ export const BoppiAvatar: React.FC<Props> = ({
         }`}
         aria-label="Boppi Mascot"
       >
-        {/* Organic pebble body adapting to system theme (White in Dark mode, Dark in Light mode) */}
+        {/* Organic pebble body adapting to active contrast theme */}
         <path
           d="M48 10C24 10 8 28 8 54C8 78 28 92 56 92C84 92 94 72 94 46C94 20 72 10 48 10Z"
           fill="var(--boppi-body, #ffffff)"
+          stroke="var(--boppi-stroke, rgba(128, 128, 140, 0.25))"
+          strokeWidth="2"
         />
 
         {/* Ambient subtle rim highlight */}

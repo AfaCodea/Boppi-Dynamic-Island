@@ -21,6 +21,10 @@ export const App: React.FC = () => {
     nextTrack,
     prevTrack,
     seekTrack,
+    setThemePreference,
+    cycleThemePreference,
+    dismissNotification,
+    sendNotification,
   } = useIslandState();
 
   useEffect(() => {
@@ -28,6 +32,7 @@ export const App: React.FC = () => {
       const appWindow = getCurrentWebviewWindow();
       if (appWindow && appWindow.label) {
         setWindowLabel(appWindow.label);
+        document.body.setAttribute("data-window", appWindow.label);
       }
     } catch {
       // In web preview, default to island
@@ -109,6 +114,17 @@ export const App: React.FC = () => {
       onNextMusic={nextTrack}
       onPrevMusic={prevTrack}
       onSeekMusic={seekTrack}
+      onChangeThemePreference={setThemePreference}
+      onCycleTheme={cycleThemePreference}
+      onDismissNotification={dismissNotification}
+      onSendTestNotification={() =>
+        sendNotification(
+          "Boppi Notifikasi!",
+          "Notifikasi terhubung aktif di Dynamic Island ✨",
+          "system",
+          "Keren!"
+        )
+      }
     />
   );
 };

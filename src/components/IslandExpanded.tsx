@@ -1,5 +1,5 @@
 import React from "react";
-import { FeatureTab, IslandState } from "../types/island";
+import { FeatureTab, IslandState, ThemePreference } from "../types/island";
 import { IslandHeader } from "./IslandHeader";
 import { IslandContent } from "./IslandContent";
 import { IslandNotification } from "./IslandNotification";
@@ -24,6 +24,11 @@ export interface IslandExpandedProps {
   onSeekMusic?: (seconds: number) => void;
   /** Optional notification dismiss */
   onDismissNotification?: () => void;
+  /** Adaptive theme preference handlers */
+  onChangeThemePreference?: (pref: ThemePreference) => void;
+  onCycleTheme?: () => void;
+  /** Test notification handler */
+  onSendTestNotification?: () => void;
 }
 
 /**
@@ -42,6 +47,9 @@ export const IslandExpanded: React.FC<IslandExpandedProps> = ({
   onPrevMusic,
   onSeekMusic,
   onDismissNotification,
+  onChangeThemePreference,
+  onCycleTheme,
+  onSendTestNotification,
 }) => {
   return (
     <div
@@ -59,6 +67,8 @@ export const IslandExpanded: React.FC<IslandExpandedProps> = ({
         musicPlaying={state.music.isPlaying}
         batteryCharging={state.battery.isCharging}
         hasNotification={Boolean(state.notification)}
+        theme={state.theme}
+        onCycleTheme={onCycleTheme}
       />
 
       {/* Notification Preview Banner (if triggered) */}
@@ -81,6 +91,8 @@ export const IslandExpanded: React.FC<IslandExpandedProps> = ({
           onNextMusic={onNextMusic}
           onPrevMusic={onPrevMusic}
           onSeekMusic={onSeekMusic}
+          onChangeThemePreference={onChangeThemePreference}
+          onSendTestNotification={onSendTestNotification}
         />
       </main>
 

@@ -1,28 +1,37 @@
 import React, { useState } from "react";
-import { Monitor, Bell, Command, Sparkles } from "lucide-react";
+import { Monitor, Bell, Command, SunMoon } from "lucide-react";
 import { BoppiAvatar } from "./BoppiAvatar";
-import { AppSettings } from "../types/island";
+import { AppSettings, ThemePreference, ThemeState } from "../types/island";
 
 export interface IslandSettingsPanelProps {
   /** Optional external settings payload */
   settings?: AppSettings;
+  /** Current adaptive theme state */
+  theme?: ThemeState;
+  /** Theme preference change handler */
+  onChangeThemePreference?: (pref: ThemePreference) => void;
   /** Settings change handler */
   onUpdateSettings?: (settings: Partial<AppSettings>) => void;
+  /** Test notification callback */
+  onSendTestNotification?: () => void;
 }
 
 /**
  * IslandSettingsPanel: System settings panel conforming to macOS Sequoia / Sonoma
- * grouped cell layouts with native-feeling toggle switches.
+ * grouped cell layouts with native-feeling toggle switches and adaptive contrast controls.
  */
 export const IslandSettingsPanel: React.FC<IslandSettingsPanelProps> = ({
   settings,
+  theme,
+  onChangeThemePreference,
   onUpdateSettings,
+  onSendTestNotification,
 }) => {
   const [autoHide, setAutoHide] = useState(settings?.autoHideFullscreen ?? true);
   const [lyricsHUD, setLyricsHUD] = useState(settings?.showCornerLyrics ?? true);
-  const [notchModel, setNotchModel] = useState<"mbp14" | "mbp16" | "fallback">(
-    settings?.notchModel ?? "mbp14"
-  );
+  const currentPref = theme?.preference ?? "auto";
+  const activeApp = theme?.activeApp || "Desktop";
+  const resolved = theme?.resolvedTheme ?? "light";
 
   const toggleAutoHide = (val: boolean) => {
     setAutoHide(val);
@@ -37,6 +46,36 @@ export const IslandSettingsPanel: React.FC<IslandSettingsPanelProps> = ({
   return (
     <div className="feature-pane island-settings-pane" role="region" aria-label="Application Settings">
       <div className="mac-settings-group">
+        {/* Smart Adaptive Contrast Mode */}
+        <div className="mac-settings-row">
+          <div className="mac-settings-label">
+            <SunMoon size={13} className="mac-settings-icon" style={{ color: "var(--island-accent-amber)" }} aria-hidden="true" />
+            <div className="mac-settings-text">
+              <span className="mac-settings-title">Adaptive UI Contrast</span>
+              <span className="mac-settings-sub">
+                {currentPref === "auto"
+                  ? `Auto: ${resolved === "light" ? "White UI" : "Black UI"} on ${activeApp} (${theme?.backgroundLuminance === "dark" ? "Dark App" : "Light App"})`
+                  : `Manual: Always ${currentPref === "light" ? "White (Light)" : "Black (Dark)"}`}
+              </span>
+            </div>
+          </div>
+          <select
+            className="mac-select-picker"
+            value={currentPref}
+            onChange={(e) => {
+              const val = e.target.value as ThemePreference;
+              onChangeThemePreference?.(val);
+            }}
+            aria-label="Adaptive UI Contrast Mode"
+          >
+            <option value="auto">Auto (Smart Invert)</option>
+            <option value="light">White (Light Surface)</option>
+            <option value="dark">Black (Dark Surface)</option>
+          </select>
+        </div>
+
+        <div className="mac-settings-divider" />
+
         {/* Fullscreen Auto-hide */}
         <div className="mac-settings-row">
           <div className="mac-settings-label">
@@ -81,29 +120,23 @@ export const IslandSettingsPanel: React.FC<IslandSettingsPanelProps> = ({
 
         <div className="mac-settings-divider" />
 
-        {/* Notch Hardware Profile Selection */}
+        {/* Connected Notifications Test */}
         <div className="mac-settings-row">
           <div className="mac-settings-label">
-            <Sparkles size={13} className="mac-settings-icon" style={{ color: "var(--island-accent-amber)" }} />
+            <Bell size={13} className="mac-settings-icon" style={{ color: "var(--island-accent-cyan)" }} aria-hidden="true" />
             <div className="mac-settings-text">
-              <span className="mac-settings-title">Notch Display Geometry</span>
-              <span className="mac-settings-sub">Profile: MacBook Pro 14" / 16" (2021)</span>
+              <span className="mac-settings-title">Notifikasi Terhubung Boppi</span>
+              <span className="mac-settings-sub">Banner interaktif untuk timer, baterai, & musik</span>
             </div>
           </div>
-          <select
-            className="mac-select-picker"
-            value={notchModel}
-            onChange={(e) => {
-              const val = e.target.value as "mbp14" | "mbp16" | "fallback";
-              setNotchModel(val);
-              onUpdateSettings?.({ notchModel: val });
-            }}
-            aria-label="Notch display geometry profile"
+          <button
+            type="button"
+            className="mac-btn-test-notif"
+            onClick={onSendTestNotification}
+            title="Kirim notifikasi uji coba"
           >
-            <option value="mbp14">14-inch (210×34 pt)</option>
-            <option value="mbp16">16-inch (214×36 pt)</option>
-            <option value="fallback">Non-Notch Floating</option>
-          </select>
+            Kirim Tes
+          </button>
         </div>
       </div>
 
@@ -115,8 +148,8 @@ export const IslandSettingsPanel: React.FC<IslandSettingsPanelProps> = ({
           <kbd className="mac-kbd">⌥ ␣</kbd>
         </div>
         <div className="mac-system-version" title="Boppi: A little bop above your apps">
-          <BoppiAvatar size={14} />
-          <span>Boppi • A little bop above your apps</span>
+          <BoppiAvatar size={14} interactive={true} bubblePlacement="top" />
+          <span>Boppi • Smart Contrast Ready</span>
         </div>
       </div>
     </div>

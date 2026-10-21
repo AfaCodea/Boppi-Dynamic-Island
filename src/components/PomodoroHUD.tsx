@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LogicalSize } from "@tauri-apps/api/dpi";
 import { invoke } from "@tauri-apps/api/core";
@@ -19,8 +19,6 @@ type OpacityPreset = "ambient" | "balanced" | "solid";
 export const PomodoroHUD: React.FC<Props> = ({ timer, onStart, onPause, onStop }) => {
   const [opacityPreset, setOpacityPreset] = useState<OpacityPreset>("balanced");
   const [mascotPopping, setMascotPopping] = useState(true);
-  const isDraggingRef = useRef(false);
-  const startPosRef = useRef({ x: 0, y: 0 });
 
   // Ensure window is sized properly across all DPI displays
   useEffect(() => {
@@ -56,34 +54,14 @@ export const PomodoroHUD: React.FC<Props> = ({ timer, onStart, onPause, onStop }
         )
       : 0;
 
-  // Window drag handling
-  const handleMouseDown = async (e: React.MouseEvent) => {
-    if (e.button === 0) {
-      isDraggingRef.current = false;
-      startPosRef.current = { x: e.screenX, y: e.screenY };
-      try {
-        const appWindow = getCurrentWebviewWindow();
-        await appWindow.startDragging();
-      } catch {
-        // Fallback for browser preview
-      }
-    }
-  };
-
-  const handleMouseUp = (e: React.MouseEvent) => {
-    const dx = Math.abs(e.screenX - startPosRef.current.x);
-    const dy = Math.abs(e.screenY - startPosRef.current.y);
-    if (dx > 4 || dy > 4) {
-      isDraggingRef.current = true;
-    }
-  };
-
   const cycleOpacity = (e: React.MouseEvent) => {
     e.stopPropagation();
     playPopSound();
-    if (opacityPreset === "ambient") setOpacityPreset("balanced");
-    else if (opacityPreset === "balanced") setOpacityPreset("solid");
-    else setOpacityPreset("ambient");
+    setOpacityPreset((prev) => {
+      if (prev === "ambient") return "balanced";
+      if (prev === "balanced") return "solid";
+      return "ambient";
+    });
   };
 
   const handleClose = async (e: React.MouseEvent) => {
@@ -100,13 +78,17 @@ export const PomodoroHUD: React.FC<Props> = ({ timer, onStart, onPause, onStop }
     }
   };
 
-  const handleAddMinutes = (mins: number, e: React.MouseEvent) => {
+  const handleAddMinutes = async (mins: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setMascotPopping(true);
     setTimeout(() => setMascotPopping(false), 600);
     playPopSound();
-    if (onStart) {
-      onStart(timer.remainingSeconds + mins * 60, timer.label);
+    try {
+      await invoke("add_timer_seconds", { seconds: mins * 60 });
+    } catch {
+      if (onStart) {
+        onStart(timer.remainingSeconds + mins * 60, timer.label);
+      }
     }
   };
 
@@ -122,25 +104,59 @@ export const PomodoroHUD: React.FC<Props> = ({ timer, onStart, onPause, onStop }
     }
   };
 
-  const handleReset = (e: React.MouseEvent) => {
+  const handleReset = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setMascotPopping(true);
     setTimeout(() => setMascotPopping(false), 600);
-    onStop?.();
+    playPopSound();
+    try {
+      await invoke("reset_timer");
+    } catch {
+      onStop?.();
+    }
+  };
+
+  const handleCardMouseDown = async (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement | null;
+    // Don't drag if user clicked any button or mascot avatar
+    if (
+      !target ||
+      target.closest("button") ||
+      target.closest(".hud-center-mascot-wrapper") ||
+      target.closest(".boppi-avatar-wrapper")
+    ) {
+      return;
+    }
+
+    try {
+      const appWindow = getCurrentWebviewWindow();
+      await appWindow.startDragging();
+    } catch {
+      // Fallback for browser preview
+    }
+  };
+
+  const handleMouseEnter = () => {
+    try {
+      const appWindow = getCurrentWebviewWindow();
+      appWindow.setFocus().catch(() => {});
+    } catch {}
   };
 
   return (
     <div
       className={`pomodoro-hud-root opacity-${opacityPreset}`}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      data-tauri-drag-region
+      onMouseEnter={handleMouseEnter}
       title="Tahan & drag untuk memindahkan timer ke mana saja"
     >
-      <div className="pomodoro-hud-card" data-tauri-drag-region>
+      <div
+        className="pomodoro-hud-card"
+        onMouseDown={handleCardMouseDown}
+      >
         {/* Top telemetry bar */}
-        <div className="pomodoro-hud-topbar" data-tauri-drag-region>
-          <div className="pomodoro-hud-top-left" data-tauri-drag-region>
+        <div className="pomodoro-hud-topbar">
+          <div className="pomodoro-hud-top-left">
             <span className="hud-status-indicator">
               <span className={`pulse-dot ${timer.running ? "live-green" : ""}`} />
               <span>{timer.running ? "Running" : timer.paused ? "Paused" : "Ready"}</span>
@@ -148,7 +164,7 @@ export const PomodoroHUD: React.FC<Props> = ({ timer, onStart, onPause, onStop }
           </div>
 
           {/* Quick HUD controls */}
-          <div className="pomodoro-hud-actions" onMouseDown={(e) => e.stopPropagation()}>
+          <div className="pomodoro-hud-actions">
             <button
               type="button"
               className="hud-tool-btn"
@@ -172,7 +188,7 @@ export const PomodoroHUD: React.FC<Props> = ({ timer, onStart, onPause, onStop }
         </div>
 
         {/* Center Stage: Icon lucu pop FIRST, then Pomodoro title and smooth countdown time */}
-        <div className="pomodoro-hud-center" data-tauri-drag-region>
+        <div className="pomodoro-hud-center">
           {/* Step 1: Cute Mascot Icon pops in first */}
           <div
             className={`hud-center-mascot-wrapper ${mascotPopping ? "mascot-popping" : ""}`}
@@ -188,7 +204,7 @@ export const PomodoroHUD: React.FC<Props> = ({ timer, onStart, onPause, onStop }
           </div>
 
           {/* Step 2: Pomodoro title & countdown digits smoothly revealed */}
-          <div className="hud-time-smooth-group" data-tauri-drag-region>
+          <div className="hud-time-smooth-group">
             <div className="hud-pomodoro-title-clean">
               <span className="hud-pomodoro-text">Pomodoro</span>
               {timer.label &&
@@ -198,12 +214,12 @@ export const PomodoroHUD: React.FC<Props> = ({ timer, onStart, onPause, onStop }
                 )}
             </div>
 
-            <div className="hud-digits-wrapper" data-tauri-drag-region>
+            <div className="hud-digits-wrapper">
               <span className="hud-time-digits">{formatTime(timer.remainingSeconds)}</span>
             </div>
 
             {/* Glowing smooth progress track */}
-            <div className="hud-progress-container" data-tauri-drag-region>
+            <div className="hud-progress-container">
               <div className="hud-progress-track">
                 <div
                   className="hud-progress-fill"
@@ -215,7 +231,7 @@ export const PomodoroHUD: React.FC<Props> = ({ timer, onStart, onPause, onStop }
         </div>
 
         {/* Bottom Quick Control Bar */}
-        <div className="pomodoro-hud-footer" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="pomodoro-hud-footer">
           <div className="hud-time-bumps">
             <button
               type="button"

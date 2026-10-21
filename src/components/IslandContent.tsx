@@ -1,5 +1,5 @@
 import React from "react";
-import { FeatureTab, IslandState } from "../types/island";
+import { FeatureTab, IslandState, ThemePreference } from "../types/island";
 import { IslandTimer } from "./IslandTimer";
 import { IslandMusicPlayer } from "./IslandMusicPlayer";
 import { LyricsFeature } from "../features/lyrics/LyricsFeature";
@@ -21,6 +21,10 @@ export interface IslandContentProps {
   onNextMusic?: () => void;
   onPrevMusic?: () => void;
   onSeekMusic?: (seconds: number) => void;
+  /** Theme preference change handler */
+  onChangeThemePreference?: (pref: ThemePreference) => void;
+  /** Test notification callback */
+  onSendTestNotification?: () => void;
 }
 
 /**
@@ -36,6 +40,8 @@ export const IslandContent: React.FC<IslandContentProps> = ({
   onNextMusic,
   onPrevMusic,
   onSeekMusic,
+  onChangeThemePreference,
+  onSendTestNotification,
 }) => {
   switch (tab) {
     case "timer":
@@ -58,11 +64,17 @@ export const IslandContent: React.FC<IslandContentProps> = ({
         />
       );
     case "lyrics":
-      return <LyricsFeature music={state.music} />;
+      return <LyricsFeature music={state.music} onSeekLyric={onSeekMusic} />;
     case "battery":
       return <IslandBatteryIndicator battery={state.battery} />;
     case "settings":
-      return <IslandSettingsPanel />;
+      return (
+        <IslandSettingsPanel
+          theme={state.theme}
+          onChangeThemePreference={onChangeThemePreference}
+          onSendTestNotification={onSendTestNotification}
+        />
+      );
     default:
       return null;
   }

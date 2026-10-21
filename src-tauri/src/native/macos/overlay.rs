@@ -2,7 +2,7 @@ use tauri::WebviewWindow;
 use tracing::{info, warn};
 
 #[cfg(target_os = "macos")]
-use objc2_app_kit::{NSColor, NSWindow, NSWindowCollectionBehavior};
+use objc2_app_kit::{NSColor, NSScreen, NSWindow, NSWindowCollectionBehavior};
 #[cfg(target_os = "macos")]
 use objc2_foundation::{MainThreadMarker, NSPoint, NSRect, NSSize};
 
@@ -23,9 +23,9 @@ impl OverlayManager {
                 }
             };
 
-            let Some(_mtm) = MainThreadMarker::new() else {
-                warn!("Overlay setup must be run on the main thread");
-                return;
+            let _mtm = match MainThreadMarker::new() {
+                Some(mtm) => mtm,
+                None => unsafe { MainThreadMarker::new_unchecked() },
             };
 
             // SAFETY:
@@ -35,47 +35,58 @@ impl OverlayManager {
             unsafe {
                 let ns_window: &NSWindow = &*ns_win_ptr;
 
-                // 1. Transparent background & no shadow
+                // 1. Transparent background & no shadow & keep visible on deactivate
                 let clear_color = NSColor::clearColor();
                 ns_window.setBackgroundColor(Some(&clear_color));
                 ns_window.setOpaque(false);
                 ns_window.setHasShadow(false);
+                ns_window.setHidesOnDeactivate(false);
 
-                // 2. Window Level: NSStatusWindowLevel (25)
-                ns_window.setLevel(25);
+                // 2. Window Level: Dynamic Island sits at 26, corner-lyrics at 24 (emerging from behind island)
+                let window_level = if label == "island" {
+                    26
+                } else if label == "corner-lyrics" {
+                    24
+                } else {
+                    25
+                };
+                ns_window.setLevel(window_level);
 
                 // 3. Collection Behavior:
-                // CanJoinAllSpaces (1 << 0) | IgnoresCycle (1 << 6) | FullScreenAuxiliary (1 << 8)
-                // FullScreenAuxiliary (1 << 8) allows the window to appear on top of Fullscreen apps (Chrome, IDE, etc.)
-                // For island, also add Stationary (1 << 4).
-                let behavior_flags = if label == "corner-lyrics" || label == "pomodoro-hud" {
-                    (1 << 0) | (1 << 6) | (1 << 8)
-                } else {
-                    (1 << 0) | (1 << 4) | (1 << 6) | (1 << 8)
-                };
+                // CanJoinAllSpaces (1 << 0)
+                // IgnoresCycle (1 << 6)
+                // FullScreenAuxiliary (1 << 8)
+                // CanJoinAllApplications (1 << 18) - CRITICAL for displaying over OTHER applications' Fullscreen spaces!
+                let behavior_flags = (1 << 0) | (1 << 6) | (1 << 8) | (1 << 18);
                 let behavior = NSWindowCollectionBehavior(behavior_flags);
                 ns_window.setCollectionBehavior(behavior);
+                ns_window.setAcceptsMouseMovedEvents(true);
+                ns_window.setIgnoresMouseEvents(false);
                 if label == "corner-lyrics" || label == "pomodoro-hud" {
                     ns_window.setMovable(true);
+                } else {
+                    ns_window.setMovable(false);
                 }
 
-                // 4. Position: center-top for island, top-right for lyrics, dead-center for pomodoro-hud
-                if let Some(screen) = ns_window.screen() {
+                // 4. Position: center-top for island, dead-center horizontally for lyrics, dead-center for pomodoro-hud
+                let screen_opt = ns_window.screen().or_else(|| NSScreen::mainScreen(_mtm));
+                if let Some(screen) = screen_opt {
                     let screen_frame = screen.frame();
                     let window_frame = ns_window.frame();
 
-                    let win_w = window_frame.size.width;
-                    let win_h = window_frame.size.height;
-
-                    let x = if label == "corner-lyrics" {
-                        screen_frame.origin.x + screen_frame.size.width - win_w - 24.0
+                    let (win_w, win_h) = if label == "island" {
+                        (366.0, 44.0) // Sized generously so hover expansion & notification pill never clip or jitter
+                    } else if label == "corner-lyrics" {
+                        (720.0, 90.0) // 90px height allows full 30px emergence from behind island without webview clipping
                     } else {
-                        // Dead center horizontally for both island and pomodoro-hud
-                        screen_frame.origin.x + (screen_frame.size.width - win_w) / 2.0
+                        (window_frame.size.width, window_frame.size.height)
                     };
 
+                    let x = screen_frame.origin.x + (screen_frame.size.width - win_w) / 2.0;
+
                     let y = if label == "corner-lyrics" {
-                        screen_frame.origin.y + screen_frame.size.height - win_h - 40.0
+                        // Tucked 18px below top of screen (16px overlap zone directly behind 34px island capsule)
+                        screen_frame.origin.y + screen_frame.size.height - win_h - 18.0
                     } else if label == "pomodoro-hud" {
                         // Dead center vertically on the display
                         screen_frame.origin.y + (screen_frame.size.height - win_h) / 2.0
@@ -94,8 +105,8 @@ impl OverlayManager {
                     ns_window.setFrame_display(new_frame, true);
                 }
 
-                // 5. Order front without stealing key focus (don't show pomodoro-hud until user triggers timer)
-                if label != "pomodoro-hud" {
+                // 5. Order front without stealing key focus (don't show pomodoro-hud or corner-lyrics until active)
+                if label != "pomodoro-hud" && label != "corner-lyrics" {
                     ns_window.orderFrontRegardless();
                 }
             }
@@ -110,13 +121,73 @@ impl OverlayManager {
         }
     }
 
-    /// Bring overlay window to front without stealing active keyboard focus
-    pub fn bring_to_front(window: &WebviewWindow) {
+    /// Dynamically resize the island window so it does not block Chrome tabs when compact
+    pub fn resize_island(window: &WebviewWindow, expanded: bool) {
         #[cfg(target_os = "macos")]
         {
             if let Ok(ptr) = window.ns_window() {
                 unsafe {
                     let ns_window = &*(ptr as *mut NSWindow);
+                    let mtm = match MainThreadMarker::new() {
+                        Some(m) => m,
+                        None => MainThreadMarker::new_unchecked(),
+                    };
+                    let screen_opt = ns_window.screen().or_else(|| NSScreen::mainScreen(mtm));
+                    if let Some(screen) = screen_opt {
+                        let screen_frame = screen.frame();
+                        let (win_w, win_h) = if expanded {
+                            (460.0, 220.0)
+                        } else {
+                            (366.0, 44.0)
+                        };
+                        let x = screen_frame.origin.x + (screen_frame.size.width - win_w) / 2.0;
+                        let y = screen_frame.origin.y + screen_frame.size.height - win_h;
+                        let current_frame = ns_window.frame();
+                        if (current_frame.origin.x - x).abs() > 0.5
+                            || (current_frame.origin.y - y).abs() > 0.5
+                            || (current_frame.size.width - win_w).abs() > 0.5
+                            || (current_frame.size.height - win_h).abs() > 0.5
+                        {
+                            let new_frame = NSRect {
+                                origin: NSPoint { x, y },
+                                size: NSSize {
+                                    width: win_w,
+                                    height: win_h,
+                                },
+                            };
+                            ns_window.setFrame_display(new_frame, false);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Bring overlay window to front without stealing active keyboard focus
+    pub fn bring_to_front(window: &WebviewWindow) {
+        #[cfg(target_os = "macos")]
+        {
+            let label = window.label().to_string();
+            if let Ok(ptr) = window.ns_window() {
+                unsafe {
+                    let ns_window = &*(ptr as *mut NSWindow);
+                    let window_level = if label == "island" {
+                        26
+                    } else if label == "corner-lyrics" {
+                        24
+                    } else {
+                        25
+                    };
+                    ns_window.setLevel(window_level);
+                    let behavior = NSWindowCollectionBehavior((1 << 0) | (1 << 6) | (1 << 8) | (1 << 18));
+                    ns_window.setCollectionBehavior(behavior);
+                    ns_window.setHidesOnDeactivate(false);
+                    if label == "corner-lyrics" || label == "pomodoro-hud" {
+                        ns_window.setMovable(true);
+                    } else {
+                        ns_window.setMovable(false);
+                    }
+                    ns_window.setIgnoresMouseEvents(false);
                     ns_window.orderFrontRegardless();
                 }
             }

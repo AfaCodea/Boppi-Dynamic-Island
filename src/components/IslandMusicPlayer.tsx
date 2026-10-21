@@ -49,7 +49,7 @@ export const IslandMusicPlayer: React.FC<IslandMusicPlayerProps> = ({
     <div className="feature-pane island-music-pane" role="region" aria-label="Music Player">
       {/* Artwork Thumbnail */}
       <div className={`music-artwork-v2 ${music.isPlaying ? "is-playing" : ""}`}>
-        <Music size={22} color="#ffffff" aria-hidden="true" />
+        <Music size={22} color="currentColor" aria-hidden="true" />
       </div>
 
       {/* Track Info & Interactive Progress Bar */}

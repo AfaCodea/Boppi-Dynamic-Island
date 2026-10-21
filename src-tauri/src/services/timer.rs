@@ -57,6 +57,17 @@ impl TimerService {
                         let final_state = timer.clone();
                         drop(timer);
                         emit_timer_tick(&app, &final_state);
+                        crate::events::emit_notification(
+                            &app,
+                            &crate::events::NotificationPayload {
+                                id: format!("timer-done-{}", my_generation),
+                                title: "Pomodoro Selesai!".to_string(),
+                                message: "Waktunya istirahat sejenak ☕ Boppi bangga dengan fokusmu!".to_string(),
+                                category: Some("timer".to_string()),
+                                time_label: Some("Now".to_string()),
+                                action_label: Some("Mulai Istirahat".to_string()),
+                            },
+                        );
                         info!("Timer completed (gen: {})", my_generation);
                         break;
                     } else {
@@ -102,6 +113,18 @@ impl TimerService {
         timer.remaining_seconds = timer.total_seconds;
         timer.end_instant = None;
         timer.generation = timer.generation.wrapping_add(1);
+        let clone_state = timer.clone();
+        drop(timer);
+        emit_timer_tick(app, &clone_state);
+    }
+
+    pub fn add_seconds(app: &AppHandle, state: &AppState, seconds: u64) {
+        let mut timer = Self::lock_timer(state);
+        timer.total_seconds = timer.total_seconds.saturating_add(seconds);
+        timer.remaining_seconds = timer.remaining_seconds.saturating_add(seconds);
+        if let Some(target) = timer.end_instant {
+            timer.end_instant = Some(target + Duration::from_secs(seconds));
+        }
         let clone_state = timer.clone();
         drop(timer);
         emit_timer_tick(app, &clone_state);
