@@ -1,7 +1,8 @@
 import React from "react";
-import { BatteryCharging, Battery, Zap, ShieldCheck, Activity } from "lucide-react";
+import { Zap, ShieldCheck, Activity } from "lucide-react";
 import { BatteryState } from "../types/island";
 import { IslandProgressBar } from "./IslandProgressBar";
+import { BatteryGlyph } from "./BatteryGlyph";
 
 export interface IslandBatteryIndicatorProps {
   /** Battery telemetry state */
@@ -52,11 +53,11 @@ export const IslandBatteryIndicator: React.FC<IslandBatteryIndicatorProps> = ({ 
       {/* Battery Diagnostics Right Column */}
       <div className="battery-side-col">
         <div className="battery-icon-display" title="Battery State">
-          {battery.isCharging ? (
-            <BatteryCharging size={28} className="battery-icon-charging" aria-hidden="true" />
-          ) : (
-            <Battery size={28} aria-hidden="true" />
-          )}
+          <BatteryGlyph
+            percentage={battery.percentage}
+            isCharging={battery.isCharging}
+            size={28}
+          />
         </div>
 
         <div className="battery-health-chip" title="Battery Condition">

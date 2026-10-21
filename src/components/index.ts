@@ -17,3 +17,4 @@ export * from "./IslandStatusIndicator";
 export * from "./CornerLyrics";
 export * from "./IslandContent";
 export * from "./PomodoroHUD";
+export * from "./BatteryGlyph";

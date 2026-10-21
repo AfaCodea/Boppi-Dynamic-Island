@@ -508,6 +508,39 @@ html[data-has-notch="false"] .compact-right {
   background: var(--island-surface-hover);
 }
 
+/* ==========================================================================
+   Compact Multi-Feature 5s Rolling Carousel
+   ========================================================================== */
+.compact-roller-viewport {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 24px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.compact-roller-item {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  height: 100%;
+  will-change: transform, opacity;
+}
+
+.compact-roller-item.roll-exit-up {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  pointer-events: none;
+  animation: compact-roll-exit 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.compact-roller-item.roll-enter-up {
+  animation: compact-roll-enter 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .compact-icon-capsule {
   width: 17px;
   height: 17px;
@@ -626,12 +659,40 @@ html[data-has-notch="false"] .compact-right {
   color: var(--island-text-primary);
 }
 
-.battery-charging-glyph {
-  color: var(--accent-emerald);
+.battery-glyph {
+  color: var(--island-text-primary);
+  transition: color 0.25s ease, transform 0.2s ease;
+  flex-shrink: 0;
 }
 
-.battery-glyph {
-  color: var(--text-secondary);
+.battery-glyph.is-charging,
+.battery-charging-glyph {
+  color: #30d158;
+}
+
+.battery-glyph.is-full {
+  color: var(--island-text-primary);
+}
+
+.battery-glyph.is-medium {
+  color: var(--island-text-primary);
+}
+
+.battery-glyph.is-low {
+  color: #f59e0b;
+}
+
+.battery-glyph.is-critical {
+  color: #ef4444;
+  animation: pulse-subtle 1.8s ease-in-out infinite;
+}
+
+.battery-badge-btn.is-charging .compact-battery-pct {
+  color: #30d158;
+}
+
+.battery-badge-btn.is-low .compact-battery-pct {
+  color: #ef4444;
 }
 
 .compact-expand-cue {
@@ -705,46 +766,92 @@ html[data-has-notch="false"] .compact-right {
   background: #34d399;
 }
 
-/* Audio Visualizer Mini Bars next to Apple Battery status */
+/* ==========================================================================
+   Apple Native 4-Pill Liquid Audio Capsule (iOS Dynamic Island Style)
+   Clean Flat Matte (Zero Shadow, Zero Glow, Crisp Apple Color)
+   ========================================================================== */
 .mini-equalizer-btn {
   background: transparent;
   border: none;
-  padding: 2px 4px;
-  border-radius: 6px;
+  padding: 3px 5px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: background 0.15s ease, transform 0.15s ease;
+  justify-content: center;
+  position: relative;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transition: background 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.35, 0.64, 1);
 }
 
 .mini-equalizer-btn:hover {
-  background: rgba(255, 255, 255, 0.09);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.06);
 }
 
 .mini-equalizer-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
 }
 
 .mini-equalizer {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 2.2px;
-  height: 12px;
+  gap: 2.5px;
+  height: 14px;
   padding: 0 1px;
+  position: relative;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+.mini-equalizer::before,
+.mini-equalizer::after,
+.mini-equalizer-btn::before,
+.mini-equalizer-btn::after,
+.mini-equalizer .bar::before,
+.mini-equalizer .bar::after {
+  display: none !important;
+  content: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  background: transparent !important;
 }
 
 .mini-equalizer .bar {
-  width: 2.2px;
-  height: 12px;
-  background-color: var(--eq-bar-color, #34c759);
+  width: 2.6px;
+  background-color: var(--eq-bar-color, #30d158);
   border-radius: 999px;
   transform-origin: bottom center;
-  transform: scaleY(0.25);
   will-change: transform;
-  box-shadow: 0 0 5px var(--eq-glow, rgba(52, 199, 89, 0.35));
-  transition: background-color 0.35s ease, box-shadow 0.35s ease;
+  filter: none !important;
+  -webkit-filter: none !important;
+  box-shadow: none !important;
+  transition: background-color 0.3s ease;
+}
+
+/* Apple Symmetrical Acoustic Contour Heights */
+.mini-equalizer .bar:nth-child(1) {
+  height: 9px;
+  transform: scaleY(0.4);
+}
+
+.mini-equalizer .bar:nth-child(2) {
+  height: 14px;
+  transform: scaleY(0.35);
+}
+
+.mini-equalizer .bar:nth-child(3) {
+  height: 12px;
+  transform: scaleY(0.4);
+}
+
+.mini-equalizer .bar:nth-child(4) {
+  height: 8px;
+  transform: scaleY(0.45);
 }
 
 /* Authentic Apple-Style Liquid Rhythmic Wave synced with song tempo */

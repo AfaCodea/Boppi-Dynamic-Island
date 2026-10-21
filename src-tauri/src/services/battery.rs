@@ -78,7 +78,7 @@ impl BatteryService {
                     }
                 }
 
-                sleep(Duration::from_secs(5)).await;
+                sleep(Duration::from_secs(2)).await;
             }
         });
     }
@@ -86,6 +86,7 @@ impl BatteryService {
     #[cfg(target_os = "macos")]
     fn parse_pmset_output(stdout: &str) -> BatteryState {
         let mut state = BatteryState::default();
+        let on_ac = stdout.contains("AC Power");
 
         for line in stdout.lines() {
             if line.contains('%') {
@@ -98,10 +99,14 @@ impl BatteryService {
                     }
                 }
 
-                state.is_charging = stdout.contains("AC Power")
-                    || line.contains("charging")
+                // Accurate macOS battery charging detection:
+                // Must be drawing from AC Power, or line explicitly has charging status (NOT discharging!)
+                let is_discharging = line.contains("discharging") || stdout.contains("Battery Power");
+                let is_actively_charging = line.contains("; charging")
                     || line.contains("finishing charge")
-                    || line.contains("charged");
+                    || line.contains("; charged");
+
+                state.is_charging = (on_ac || is_actively_charging) && !is_discharging;
 
                 if line.contains("remaining") {
                     let parts: Vec<&str> = line.split(';').collect();

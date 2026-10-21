@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Clock, BatteryCharging, Battery, Music, ChevronDown, Bell } from "lucide-react";
+import { Clock, Music, ChevronDown, Bell } from "lucide-react";
 import { FeatureTab, IslandState } from "../types/island";
 import { BoppiAvatar } from "./BoppiAvatar";
+import { BatteryGlyph } from "./BatteryGlyph";
 import { playPopSound } from "../utils/audio";
 
 export interface IslandCompactProps {
@@ -62,13 +63,104 @@ export const IslandCompact: React.FC<IslandCompactProps> = ({
   };
 
   const isPlaying = state.music.isPlaying;
-  const isTimerRunning = state.timer.running;
+  const isTimerRunning = Boolean(state.timer.running);
   const hasValidTrack = Boolean(
     isPlaying &&
       state.music.title &&
       state.music.title !== "No Media Playing" &&
       state.music.title !== "Connecting to Media..."
   );
+
+  // Left-wing activities: Focus Timer / Pomodoro and Playing Music
+  const activeFeatures = useMemo(() => {
+    const list: FeatureTab[] = [];
+    if (isTimerRunning) list.push("timer");
+    if (hasValidTrack) list.push("music");
+    return list;
+  }, [isTimerRunning, hasValidTrack]);
+
+  const [currentFeature, setCurrentFeature] = useState<FeatureTab | null>(() => activeFeatures[0] ?? null);
+  const [exitingFeature, setExitingFeature] = useState<FeatureTab | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isRollerHovered, setIsRollerHovered] = useState(false);
+  const rollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync currentFeature when active activities change
+  useEffect(() => {
+    if (activeFeatures.length === 0) {
+      setCurrentFeature(null);
+      setExitingFeature(null);
+      setIsTransitioning(false);
+    } else if (!currentFeature || !activeFeatures.includes(currentFeature)) {
+      setCurrentFeature(activeFeatures[0]);
+      setExitingFeature(null);
+      setIsTransitioning(false);
+    }
+  }, [activeFeatures, currentFeature]);
+
+  // Rolling carousel every 5 seconds when multiple features are active simultaneously
+  useEffect(() => {
+    if (activeFeatures.length <= 1 || isRollerHovered) return;
+
+    const interval = setInterval(() => {
+      setCurrentFeature((curr) => {
+        const validCurr = curr && activeFeatures.includes(curr) ? curr : activeFeatures[0];
+        const currentIndex = activeFeatures.indexOf(validCurr);
+        const nextIndex = (currentIndex + 1) % activeFeatures.length;
+        const nextFeature = activeFeatures[nextIndex];
+
+        setExitingFeature(validCurr);
+        setIsTransitioning(true);
+
+        if (rollTimerRef.current) clearTimeout(rollTimerRef.current);
+        rollTimerRef.current = setTimeout(() => {
+          setExitingFeature(null);
+          setIsTransitioning(false);
+        }, 420);
+
+        return nextFeature;
+      });
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      if (rollTimerRef.current) clearTimeout(rollTimerRef.current);
+    };
+  }, [activeFeatures, isRollerHovered]);
+
+  const renderFeatureBadge = (feature: FeatureTab) => {
+    if (feature === "timer") {
+      return (
+        <button
+          type="button"
+          className="compact-badge-btn timer-badge-active"
+          onClick={(e) => handleFeatureClick("timer", e)}
+          title={`Focus Timer • ${formatTime(state.timer.remainingSeconds)} • Click to manage`}
+        >
+          <div className="compact-icon-capsule timer-capsule">
+            <Clock size={10} className="timer-spin-subtle" />
+          </div>
+          <span className="compact-tabular-time">{formatTime(state.timer.remainingSeconds)}</span>
+        </button>
+      );
+    }
+    if (feature === "music") {
+      return (
+        <button
+          type="button"
+          className="compact-badge-btn music-badge-subtle is-active"
+          onClick={(e) => handleFeatureClick("music", e)}
+          title={`Now Playing: ${state.music.title} • ${state.music.artist}`}
+        >
+          <div className="compact-icon-capsule music-capsule is-playing">
+            <Music size={10} color="currentColor" />
+          </div>
+          <span className="compact-music-title">{state.music.title}</span>
+        </button>
+      );
+    }
+    return null;
+  };
 
   // Dynamic Musical Tempo & Rhythm signature tailored to current track
   const tempo = useMemo(() => {
@@ -98,7 +190,10 @@ export const IslandCompact: React.FC<IslandCompactProps> = ({
       durationSec = Number((1.55 - ((bpm - 108) / 24) * 0.35).toFixed(2));
     }
 
-    return { bpm, durationSec, isApple };
+    // Authentic Apple iOS Dynamic Island: Pure crisp solid matte color, zero shadow, zero dark gradient
+    const barColor = isApple ? "#fa2d48" : "#30d158";
+
+    return { bpm, durationSec, isApple, barColor };
   }, [state.music.title, state.music.artist]);
 
   return (
@@ -134,7 +229,14 @@ export const IslandCompact: React.FC<IslandCompactProps> = ({
           </div>
           <div className="compact-notif-badge">
             {state.notification.category === "timer" && <Clock size={11} className="notif-badge-icon timer" />}
-            {state.notification.category === "battery" && <Battery size={11} className="notif-badge-icon battery" />}
+            {state.notification.category === "battery" && (
+              <BatteryGlyph
+                percentage={state.battery.percentage}
+                isCharging={state.battery.isCharging}
+                size={11}
+                className="notif-badge-icon battery"
+              />
+            )}
             {state.notification.category === "music" && <Music size={11} className="notif-badge-icon music" />}
             {(!state.notification.category || state.notification.category === "system") && (
               <Bell size={11} className="notif-badge-icon default" />
@@ -145,30 +247,26 @@ export const IslandCompact: React.FC<IslandCompactProps> = ({
         <>
           {/* Left Wing: Active Timer, Active Playing Media, or Minimal Idle Badge */}
           <div className="compact-left">
-            {isTimerRunning ? (
-              <button
-                type="button"
-                className="compact-badge-btn timer-badge-active"
-                onClick={(e) => handleFeatureClick("timer", e)}
-                title="Focus Timer • Click to manage"
+            {activeFeatures.length > 0 ? (
+              <div
+                className={`compact-roller-viewport ${activeFeatures.length > 1 ? "is-multi-rolling" : ""}`}
+                onMouseEnter={() => setIsRollerHovered(true)}
+                onMouseLeave={() => setIsRollerHovered(false)}
               >
-                <div className="compact-icon-capsule timer-capsule">
-                  <Clock size={10} className="timer-spin-subtle" />
-                </div>
-                <span className="compact-tabular-time">{formatTime(state.timer.remainingSeconds)}</span>
-              </button>
-            ) : hasValidTrack ? (
-              <button
-                type="button"
-                className="compact-badge-btn music-badge-subtle is-active"
-                onClick={(e) => handleFeatureClick("music", e)}
-                title={`Now Playing: ${state.music.title} • ${state.music.artist}`}
-              >
-                <div className="compact-icon-capsule music-capsule is-playing">
-                  <Music size={10} color="currentColor" />
-                </div>
-                <span className="compact-music-title">{state.music.title}</span>
-              </button>
+                {exitingFeature && (
+                  <div key={`exit-${exitingFeature}`} className="compact-roller-item roll-exit-up">
+                    {renderFeatureBadge(exitingFeature)}
+                  </div>
+                )}
+                {currentFeature && (
+                  <div
+                    key={`curr-${currentFeature}`}
+                    className={`compact-roller-item ${isTransitioning ? "roll-enter-up" : ""}`}
+                  >
+                    {renderFeatureBadge(currentFeature)}
+                  </div>
+                )}
+              </div>
             ) : (
               <button
                 type="button"
@@ -220,10 +318,7 @@ export const IslandCompact: React.FC<IslandCompactProps> = ({
                   style={
                     {
                       "--tempo-duration": `${tempo.durationSec}s`,
-                      "--eq-bar-color": tempo.isApple ? "#fa2d48" : "#34c759",
-                      "--eq-glow": tempo.isApple
-                        ? "rgba(250, 45, 72, 0.4)"
-                        : "rgba(52, 199, 89, 0.4)",
+                      "--eq-bar-color": tempo.barColor,
                     } as React.CSSProperties
                   }
                 >
@@ -238,15 +333,23 @@ export const IslandCompact: React.FC<IslandCompactProps> = ({
             {/* Battery Telemetry Badge */}
             <button
               type="button"
-              className="compact-badge-btn battery-badge-btn"
+              className={`compact-badge-btn battery-badge-btn ${
+                state.battery.isCharging
+                  ? "is-charging"
+                  : state.battery.percentage <= 20
+                  ? "is-low"
+                  : ""
+              }`}
               onClick={(e) => handleFeatureClick("battery", e)}
-              title={`Battery: ${state.battery.percentage}% ${state.battery.isCharging ? "(Charging)" : ""}`}
+              title={`Battery: ${state.battery.percentage}% ${
+                state.battery.isCharging ? "(Sedang Mengisi Daya ⚡)" : "(Menggunakan Baterai)"
+              }`}
             >
-              {state.battery.isCharging ? (
-                <BatteryCharging size={13} className="battery-charging-glyph" />
-              ) : (
-                <Battery size={13} className="battery-glyph" />
-              )}
+              <BatteryGlyph
+                percentage={state.battery.percentage}
+                isCharging={state.battery.isCharging}
+                size={13}
+              />
               <span className="compact-battery-pct">{state.battery.percentage}%</span>
             </button>
           </div>

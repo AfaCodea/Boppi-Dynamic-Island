@@ -428,4 +428,34 @@
   transform-origin: center top;
 }
 
+/* ==========================================================================
+   Compact Multi-Feature 5s Rolling Carousel Animations (Apple Dynamic Island)
+   ========================================================================== */
+
+@keyframes compact-roll-exit {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    transform: translateY(-18px);
+    opacity: 0;
+    filter: blur(1px);
+  }
+}
+
+@keyframes compact-roll-enter {
+  0% {
+    transform: translateY(18px);
+    opacity: 0;
+    filter: blur(1px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
 
